@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Dashboard | 2026</title>
+    <!-- Font and Icon Libraries -->
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com">
+    
+    <style>
+        :root {
+            /* Your Specific Palette */
+            --olive-leaf: #606C38;
+            --black-forest: #283618;
+            --cornsilk: #FEFAE0;
+            --sunlit-clay: #DDA15E;
+            --copperwood: #BC6C25;
+            
+            --text-dark: #283618;
+            --text-light: #FEFAE0;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--cornsilk);
+            color: var(--black-forest);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- Sidebar Style --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--black-forest);
+            color: var(--text-light);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--sunlit-clay);
+        }
+
+        .nav-menu { list-style: none; flex-grow: 1; }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: #aeb9a7; /* Muted version of olive */
+            text-decoration: none;
+            border-radius: 12px;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .nav-link i { font-size: 1.2rem; }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: var(--olive-leaf);
+            color: var(--cornsilk);
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: 260px;
+            padding: 2.5rem;
+            width: calc(100% - 260px);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        /* --- Modern Stats Cards --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            box-shadow: 0 10px 25px rgba(40, 54, 24, 0.05);
+            transition: var(--transition);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--sunlit-clay);
+        }
+
+        .icon-box {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .icon-sales { background: #fdf2e9; color: var(--copperwood); }
+        .icon-orders { background: #f0f4ec; color: var(--olive-leaf); }
+        .icon-users { background: #fef9e7; color: var(--sunlit-clay); }
+
+        .stat-info h3 { font-size: 0.9rem; color: #666; font-weight: 500; }
+        .stat-info p { font-size: 1.5rem; font-weight: 700; color: var(--black-forest); }
+
+        /* --- Quick Actions / Buttons --- */
+        .actions-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+        }
+
+        .btn-group { display: flex; gap: 1rem; margin-top: 1.5rem; }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary { background: var(--copperwood); color: white; }
+        .btn-primary:hover { background: var(--black-forest); box-shadow: 0 8px 15px rgba(188, 108, 37, 0.3); }
+
+        .btn-secondary { background: var(--olive-leaf); color: white; }
+        .btn-secondary:hover { opacity: 0.9; }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fas fa-layer-group"></i>
+            <span>NovaPOS</span>
+        </div>
+        <nav class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link active">
+                    <i class="fas fa-chart-pie"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="sale.html" class="nav-link">
+                    <i class="fas fa-barcode"></i> Quick Sale
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="salemanual.html" class="nav-link">
+                    <i class="fas fa-search-dollar"></i> Manual Entry
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-boxes-stacked"></i> Inventory
+                </a>
+            </li>
+        </nav>
+        <div class="nav-item" style="margin-top: auto;">
+            <a href="#" class="nav-link" style="color: var(--sunlit-clay);">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header>
+            <div>
+                <h1 style="font-size: 1.8rem;">Welcome back, Admin</h1>
+                <p style="color: #666; font-size: 0.95rem;">Here's what's happening today.</p>
+            </div>
+            <div class="user-profile">
+                <img src="https://ui-avatars.com" alt="User" style="width: 32px; border-radius: 50%;">
+                <span style="font-weight: 600; font-size: 0.9rem;">System Manager</span>
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="icon-box icon-sales"><i class="fas fa-coins"></i></div>
+                <div class="stat-info">
+                    <h3>Total Revenue</h3>
+                    <p>$24,500</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon-box icon-orders"><i class="fas fa-shopping-cart"></i></div>
+                <div class="stat-info">
+                    <h3>Total Orders</h3>
+                    <p>1,240</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon-box icon-users"><i class="fas fa-user-tag"></i></div>
+                <div class="stat-info">
+                    <h3>New Customers</h3>
+                    <p>84</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="actions-section">
+            <h2 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Quick Access</h2>
+            <p style="color: #777; font-size: 0.9rem;">Start a new transaction or manage your stocks.</p>
+            
+            <div class="btn-group">
+                <a href="sale.html" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Barcode Sale
+                </a>
+                <a href="salemanual.html" class="btn btn-secondary">
+                    <i class="fas fa-keyboard"></i> Manual Entry
+                </a>
+            </div>
+        </section>
+    </main>
+
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const currentStaff = urlParams.get('user') || 'Unknown';
+
+// Use 'currentStaff' in your INSERT query logic
+console.log("Logged in as:", currentStaff); 
+
+    let billItems = [];
+    let currentItem = null;
+
+    // Live clock update
+    setInterval(() => { 
+        const clock = document.getElementById('liveClock');
+        if(clock) clock.innerText = new Date().toLocaleString(); 
+    }, 1000);
+
+    // Search product and display stock info
+    async function searchProduct() {
+        const barcode = document.getElementById('barcodeSearch').value.trim();
+        if (!barcode) return;
+        try {
+            const product = await window.authAPI.getProductByBarcode(barcode);
+            if (product) {
+                currentItem = product;
+                // Added Stock Display here so the user knows the limit immediately
+                document.getElementById('itemNameDisplay').value = `${product.name} (Rs. ${product.price}) | Available: ${product.stock}`;
+                document.getElementById('tempQty').focus();
+                document.getElementById('tempQty').select();
+            } else {
+                document.getElementById('itemNameDisplay').value = "NOT FOUND";
+                currentItem = null;
+            }
+        } catch (err) { console.error("Database search error:", err); }
+    }
+
+    document.getElementById('barcodeSearch').addEventListener('blur', searchProduct);
+    document.getElementById('barcodeSearch').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); searchProduct(); } });
+
+    // NEW: Validated Add Item Function
+    function addItemToBill() {
+        if (!currentItem) return;
+
+        const qty = parseInt(document.getElementById('tempQty').value) || 0;
+        const lineDisc = parseFloat(document.getElementById('lineDiscount').value) || 0;
+
+        // 1. Basic validation
+        if (qty <= 0) {
+            alert("Please enter a valid quantity.");
+            return;
+        }
+
+        // 2. Stock validation logic
+        // Check if item is already in the current bill to calculate "Total Requested"
+        const existingItem = billItems.find(item => item.id === currentItem.id);
+        const alreadyInBillQty = existingItem ? existingItem.qty : 0;
+        const totalRequested = alreadyInBillQty + qty;
+
+        if (totalRequested > currentItem.stock) {
+            alert(`Stock Shortage!\nItem: ${currentItem.name}\nAvailable: ${currentItem.stock}\nIn Bill: ${alreadyInBillQty}\nYou are trying to add: ${qty}\n\nMax you can add is: ${currentItem.stock - alreadyInBillQty}`);
+            document.getElementById('tempQty').focus();
+            return; // STOP: Do not add to bill
+        }
+
+        // 3. Deduction logic
+        const lineTotal = (currentItem.price * qty) - lineDisc;
+
+        // If item exists, update its qty instead of adding a new row
+        if (existingItem) {
+            existingItem.qty += qty;
+            existingItem.discount += lineDisc;
+            existingItem.total = (existingItem.price * existingItem.qty) - existingItem.discount;
+        } else {
+            billItems.push({
+                id: currentItem.id,
+                name: currentItem.name,
+                price: currentItem.price,
+                qty: qty,
+                discount: lineDisc,
+                total: lineTotal
+            });
+        }
+
+        renderBill();
+        resetInputs();
+    }
+
+    function resetInputs() {
+        currentItem = null;
+        document.getElementById('barcodeSearch').value = "";
+        document.getElementById('itemNameDisplay').value = "";
+        document.getElementById('tempQty').value = "1";
+        document.getElementById('lineDiscount').value = "0";
+        document.getElementById('barcodeSearch').focus();
+    }
+
+    function renderBill() {
+        const body = document.getElementById('billBody');
+        if(!body) return;
+        body.innerHTML = billItems.map((item, index) => `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${item.name}</td>
+                <td>${item.qty}</td>
+                <td>${item.price.toFixed(2)}</td>
+                <td style="color:red">-${item.discount.toFixed(2)}</td>
+                <td>${item.total.toFixed(2)}</td>
+                <td align="center">
+                    <button onclick="removeItem(${index})" style="color:red; background:none; border:none; cursor:pointer; font-weight:bold;">✖</button>
+                </td>
+            </tr>
+        `).join('');
+        calculateTotal();
+    }
+
+    function removeItem(idx) {
+        billItems.splice(idx, 1);
+        renderBill();
+    }
+
+    function calculateTotal() {
+        const subtotal = billItems.reduce((acc, item) => acc + item.total, 0);
+        const globalDiscount = parseFloat(document.getElementById('discount').value) || 0;
+        const grandTotal = subtotal - globalDiscount;
+        const display = document.getElementById('finalDisplay');
+        if(display) display.innerText = grandTotal.toFixed(2);
+    }
+
+async function finalizeSale() {
+    if (billItems.length === 0) { alert("No items in the bill!"); return; }
+    
+    const saleData = {
+        customerName: document.getElementById('custName').value || "General Customer",
+        items: billItems,
+        total: parseFloat(document.getElementById('finalDisplay').innerText),
+        // FIX: Use currentStaff from the top of the script
+        processedBy: currentStaff 
+    };
+
+    try {
+        const result = await window.authAPI.processSale(saleData);
+        if (result.success) {
+            // Receipt logic...
+            window.print();
+            location.reload();
+        } else { alert("Database Error: " + result.error); }
+    } catch (err) { alert("Connection error."); }
+}
+
+
+    // Input Listeners
+    document.getElementById('tempQty').addEventListener('keypress', (e) => { if (e.key === 'Enter') addItemToBill(); });
+    document.getElementById('lineDiscount').addEventListener('keypress', (e) => { if (e.key === 'Enter') addItemToBill(); });
+    document.getElementById('discount').addEventListener('input', calculateTotal);
+</script>
+
+</body>
+</html>

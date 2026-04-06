@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Supplier Return | POS CORE</title>
+    <style>
+        :root { 
+            --sidebar-dark: #2c3e50; 
+            --accent-orange: #e67e22; 
+            --bg-page: #f4f6f9; 
+            --text-white: #ffffff; 
+            --border-light: #dee2e6;
+        }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background-color: var(--bg-page); 
+            padding: 40px; 
+            margin: 0;
+            color: #333;
+        }
+
+        .back-link { 
+            text-decoration: none; 
+            color: var(--sidebar-dark); 
+            font-weight: bold; 
+            display: inline-block; 
+            margin-bottom: 20px; 
+        }
+        .back-link:hover { color: var(--accent-orange); }
+
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            max-width: 650px; 
+            margin: auto; 
+        }
+
+        h2 { 
+            color: var(--sidebar-dark); 
+            border-bottom: 2px solid var(--bg-page); 
+            padding-bottom: 10px; 
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group { margin-bottom: 20px; position: relative; }
+        
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            color: var(--sidebar-dark); 
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1.5px solid var(--border-light); 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 15px;
+        }
+        input:focus { outline: none; border-color: var(--accent-orange); }
+
+        /* --- SEARCH DROPDOWN STYLING --- */
+        .search-dropdown {
+            position: absolute;
+            width: 100%;
+            background: white;
+            border: 1px solid var(--sidebar-dark);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            border-radius: 0 0 6px 6px;
+        }
+
+        .search-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .search-item.active {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--accent-orange);
+            color: var(--accent-orange);
+            font-weight: 600;
+        }
+
+        /* --- DETAILS SECTION --- */
+        .stock-info { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin-top: 10px; 
+            border-left: 4px solid var(--sidebar-dark);
+        }
+        .stock-info p { margin: 5px 0; font-size: 14px; }
+
+        .btn-return { 
+            width: 100%; 
+            padding: 15px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: bold; 
+            background-color: var(--accent-orange); 
+            color: white; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            transition: opacity 0.2s;
+        }
+        .btn-return:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+<a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+
+<div class="card">
+    <h2>📦 Supplier Return (Outward)</h2>
+
+    <!-- Search Section -->
+    <div class="form-group">
+        <label>Search Product (Name or Batch):</label>
+        <input type="text" id="productSearch" placeholder="Type product name or batch..." autocomplete="off">
+        <div id="search-results" class="search-dropdown" style="display:none;"></div>
+    </div>
+
+    <!-- Details Section -->
+    <div id="productDetails" style="display:none; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+        <div class="stock-info">
+            <p><strong>Product:</strong> <span id="dispName"></span></p>
+            <p><strong>Batch Selected:</strong> <span id="dispBatch"></span></p>
+            <p><strong>Current Batch Stock:</strong> <span id="dispStock" style="color: #e74c3c; font-weight: bold;"></span></p>
+        </div>
+
+        <div class="form-group" style="margin-top:20px;">
+            <label>Wholesaler / Supplier Name:</label>
+            <input type="text" id="supplier" placeholder="Enter supplier name">
+        </div>
+
+        <div class="form-group">
+            <label>Quantity to Return:</label>
+            <input type="number" id="qty" min="1" value="1">
+        </div>
+
+        <button class="btn-return" onclick="handleSupplierReturn()">Deduct Stock & Process Return</button>
+    </div>
+</div>
+
+<script>
+    let currentBatch = null;
+    let selectedIndex = -1;
+    let filteredBatches = [];
+    const searchInput = document.getElementById('productSearch');
+    const resultsDiv = document.getElementById('search-results');
+
+    // 1. SEARCH LOGIC
+    searchInput.addEventListener('input', async (e) => {
+        const query = e.target.value.trim();
+        if (query.length < 2) { 
+            resultsDiv.style.display = 'none'; 
+            filteredBatches = [];
+            return; 
+        }
+        filteredBatches = await window.authAPI.searchBatchesByName(query);
+        renderResults();
+    });
+
+    function renderResults() {
+        resultsDiv.innerHTML = '';
+        selectedIndex = -1;
+        if (filteredBatches && filteredBatches.length > 0) {
+            resultsDiv.style.display = 'block';
+            filteredBatches.forEach((b, index) => {
+                const div = document.createElement('div');
+                div.className = 'search-item';
+                div.id = `item-${index}`;
+                div.innerHTML = `<strong>${b.name}</strong> | Batch: ${b.batch_no} | Stock: ${b.batch_stock}`;
+                div.onclick = () => selectBatch(b);
+                resultsDiv.appendChild(div);
+            });
+        } else {
+            resultsDiv.style.display = 'none';
+        }
+    }
+
+    // 2. KEYBOARD NAVIGATION
+    searchInput.addEventListener('keydown', (e) => {
+        const items = resultsDiv.getElementsByClassName('search-item');
+        if (resultsDiv.style.display === 'none' || items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex + 1) % items.length;
+            updateActiveItem(items);
+        } 
+        else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+            updateActiveItem(items);
+        } 
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedIndex > -1 && filteredBatches[selectedIndex]) {
+                selectBatch(filteredBatches[selectedIndex]);
+            }
+        }
+        else if (e.key === 'Escape') {
+            resultsDiv.style.display = 'none';
+        }
+    });
+
+    function updateActiveItem(items) {
+        Array.from(items).forEach(item => item.classList.remove('active'));
+        if (items[selectedIndex]) {
+            const activeItem = items[selectedIndex];
+            activeItem.classList.add('active');
+            activeItem.scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // 3. SELECT BATCH
+    function selectBatch(batch) {
+        currentBatch = batch;
+        searchInput.value = batch.name;
+        resultsDiv.style.display = 'none';
+        document.getElementById('dispName').innerText = batch.name;
+        document.getElementById('dispBatch').innerText = batch.batch_no;
+        document.getElementById('dispStock').innerText = batch.batch_stock;
+        document.getElementById('productDetails').style.display = 'block';
+        document.getElementById('supplier').focus();
+    }
+
+    // 4. PROCESS RETURN
+    async function handleSupplierReturn() {
+        const qtyInput = document.getElementById('qty');
+        const qty = parseInt(qtyInput.value);
+        const supplier = document.getElementById('supplier').value;
+
+        if (!supplier) return alert("Please enter supplier name");
+        if (qty <= 0) return alert("Please enter a valid quantity");
+        if (qty > currentBatch.batch_stock) return alert("Error: Quantity exceeds batch stock!");
+
+        const returnData = {
+            productId: currentBatch.product_id,
+            batchNo: currentBatch.batch_no,
+            quantity: qty,
+            supplier: supplier
+        };
+
+        const result = await window.authAPI.processSupplierReturn(returnData);
+        if (result.success) {
+            alert("✅ Return processed. Stock adjusted.");
+            location.reload();
+        } else {
+            alert("Error: " + result.error);
+        }
+    }
+</script>
+</body>
+</html>

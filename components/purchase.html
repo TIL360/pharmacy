@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Inward | POS CORE</title>
+    <style>
+        :root { --sidebar-dark: #2c3e50; --accent-orange: #e67e22; --bg-page: #f4f6f9; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-page); margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { color: var(--sidebar-dark); margin-top: 0; border-bottom: 2px solid var(--bg-page); padding-bottom: 10px; text-transform: uppercase; font-size: 1.2rem; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #444; font-size: 0.85rem; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; outline: none; }
+        input:focus, select:focus { border-color: var(--accent-orange); }
+        .btn-submit { background-color: var(--accent-orange); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+         .btn-back {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-block;
+            color: #333;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .btn-back:hover { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🛒 Record Purchase</h2>
+    <form id="purchaseForm">
+        <div class="form-group"><label>Select Product</label><select id="productSelect" required><option value="">-- Choose Item --</option></select></div>
+                <div class="form-group"><label>Expiry Date</label><input type="date" id="expiry_date" required></div>
+        <div class="form-group"><label>Quantity Received</label><input type="number" id="quantity" min="1" required></div>
+        <div class="form-group"><label>Cost Price (Per Unit)</label><input type="number" id="costPrice" step="0.01" required></div>
+        <div class="form-group"><label>Supplier Name</label><input type="text" id="supplier" placeholder="Wholesaler name"></div>
+        <button type="submit" class="btn-submit">Add to Inventory</button>
+    </form>
+
+    <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const products = await window.inventoryAPI.getProducts();
+        const select = document.getElementById('productSelect');
+        products.forEach(p => { const opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.name; select.appendChild(opt); });
+    });
+    document.getElementById('purchaseForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const data = { productId: parseInt(document.getElementById('productSelect').value), quantity: parseInt(document.getElementById('quantity').value), costPrice: parseFloat(document.getElementById('costPrice').value), supplier: document.getElementById('supplier').value || "N/A", expiry_date: document.getElementById('expiry_date').value };
+        const res = await window.inventoryAPI.savePurchase(data);
+        if (res.success) { alert('Stock Updated!'); location.reload(); }
+    };
+</script>
+</body>
+</html>

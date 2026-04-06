@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase Records | POS CORE</title>
+    <style>
+        :root { --sidebar-dark: #2c3e50; --accent-orange: #e67e22; --bg-page: #f4f6f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-page); padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: var(--sidebar-dark); color: white; }
+        .btn-edit { background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 400px; border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        input { width: 100%; padding: 10px; box-sizing: border-box; }
+    .btn-back {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-block;
+            color: #333;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .btn-back:hover { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+
+    <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
+<div class="card">
+    <h2>📦 Purchase History</h2>
+    <table id="purchaseTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Batch</th>
+                <th>Expiry</th>
+                <th>Qty</th>
+                <th>Cost</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3>Edit Purchase</h3>
+        <input type="hidden" id="editId">
+        <div class="form-group"><label>Expiry Date</label><input type="date" id="editExpiry"></div>
+        <div class="form-group"><label>Quantity</label><input type="number" id="editQty"></div>
+        <button onclick="saveEdit()" style="background:var(--accent-orange); color:white; border:none; padding:10px; width:100%;">Update Record</button>
+        <button onclick="closeModal()" style="margin-top:10px; width:100%;">Cancel</button>
+    </div>
+</div>
+
+<script>
+    async function loadPurchases() {
+        const purchases = await window.inventoryAPI.getPurchases();
+        const tbody = document.querySelector('#purchaseTable tbody');
+        tbody.innerHTML = '';
+        purchases.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.id}</td>
+                    <td>${p.product_name}</td>
+                    <td>${p.batch_no}</td>
+                    <td>${p.expiry_date}</td>
+                    <td>${p.quantity}</td>
+                    <td>${p.cost_price}</td>
+                    <td><button class="btn-edit" onclick="openEdit(${JSON.stringify(p).replace(/"/g, '&quot;')})">Edit</button></td>
+                </tr>`;
+        });
+    }
+
+    function openEdit(p) {
+        document.getElementById('editId').value = p.id;
+        document.getElementById('editExpiry').value = p.expiry_date;
+        document.getElementById('editQty').value = p.quantity;
+        document.getElementById('editModal').style.display = 'block';
+    }
+
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+
+    async function saveEdit() {
+        const data = {
+            id: document.getElementById('editId').value,
+            expiry_date: document.getElementById('editExpiry').value,
+            quantity: document.getElementById('editQty').value
+        };
+        const res = await window.inventoryAPI.updatePurchase(data);
+        if(res.success) { alert('Updated!'); location.reload(); }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPurchases);
+</script>
+</body>
+</html>

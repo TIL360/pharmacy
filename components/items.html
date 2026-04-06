@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add New Item || Point of Sale 2026</title>
+    <style>
+        /* Updated to match the "Customer Return History" image colors */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f4f7f6; /* Light grey background from image */
+            padding: 40px; 
+            margin: 0; 
+        }
+
+        .form-container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            max-width: 500px; 
+            margin: auto; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Header color matching the table header in image */
+        h2 { 
+            color: #2c3e50; 
+            text-align: center; 
+            margin-top: 0; 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            color: #2c3e50; 
+            font-weight: bold; 
+            font-size: 14px; 
+        }
+
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            font-size: 15px; 
+            transition: border-color 0.3s; 
+        }
+
+        input:focus, select:focus { 
+            outline: none; 
+            border-color: #3498db; 
+        }
+        
+        .row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .row .form-group { flex: 1; margin-bottom: 0; }
+
+        /* Button uses the primary navy color */
+        button { 
+            background: #2c3e50; 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            width: 100%; 
+            font-size: 1rem; 
+            font-weight: bold; 
+            margin-top: 10px; 
+            transition: background 0.2s; 
+        }
+
+        button:hover { background: #34495e; }
+
+        /* Accent color for prices/important info matching the red in the image */
+        .price-label { color: #e74c3c; font-weight: bold; }
+
+        .back-link { 
+            display: block; 
+            margin-top: 20px; 
+            text-align: center; 
+            color: #7f8c8d; 
+            text-decoration: none; 
+            font-size: 0.9rem; 
+        }
+        .back-link:hover { color: #2c3e50; text-decoration: underline; }
+
+        .btn-back {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-block;
+            color: #333;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .btn-back:hover { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
+
+    <div class="form-container">
+        <h2>📦 Add New Product</h2>
+        <form id="itemForm">
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="name" required placeholder="e.g. Panadol">
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Cost Price (Rs.)</label>
+                    <input type="number" id="cost_price" step="0.01" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label class="price-label">Selling Price (Rs.)</label>
+                    <input type="number" id="price" step="0.01" required placeholder="0.00" style="color: #e74c3c; font-weight: bold;">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category" required>
+                        <option value="">-- Loading --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Initial Stock</label>
+                    <input type="number" id="stock" value="0" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Min Stock Level (Alert)</label>
+                <input type="number" id="min_stock_level" required placeholder="e.g. 10">
+                <small style="color: #7f8c8d; font-size: 11px;">You will see a notification when stock falls below this.</small>
+            </div>
+
+            <button type="submit" id="submitBtn">Add to Inventory</button>
+        </form>
+    </div>
+
+    <script>
+        const dropdown = document.getElementById('category');
+        const itemForm = document.getElementById('itemForm');
+
+        async function loadCategories() {
+            try {
+                const result = await window.authAPI.getCategories();
+                if (result.success && result.categories.length > 0) {
+                    dropdown.innerHTML = '<option value="">-- Select Category --</option>';
+                    result.categories.forEach(cat => {
+                        const opt = document.createElement('option');
+                        opt.value = cat.name;
+                        opt.textContent = cat.name;
+                        dropdown.appendChild(opt);
+                    });
+                } else {
+                    dropdown.innerHTML = '<option value="">No Categories Found!</option>';
+                }
+            } catch (err) {
+                dropdown.innerHTML = '<option value="">Error Loading Categories</option>';
+            }
+        }
+
+        itemForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerText = "Saving...";
+            submitBtn.disabled = true;
+
+            const itemData = {
+                name: document.getElementById('name').value,
+                cost_price: parseFloat(document.getElementById('cost_price').value),
+                price: parseFloat(document.getElementById('price').value),
+                stock: parseInt(document.getElementById('stock').value),
+                category: document.getElementById('category').value,
+                min_stock_level: parseInt(document.getElementById('min_stock_level').value)
+            };
+
+            try {
+                const result = await window.authAPI.addItem(itemData);
+                if (result.success) {
+                    alert('Item added successfully!');
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert('Error: ' + result.error);
+                    submitBtn.innerText = "Add to Inventory";
+                    submitBtn.disabled = false;
+                }
+            } catch (err) {
+                alert('Connection Error');
+                submitBtn.innerText = "Add to Inventory";
+                submitBtn.disabled = false;
+            }
+        });
+
+        window.onload = loadCategories;
+    </script>
+</body>
+</html>
