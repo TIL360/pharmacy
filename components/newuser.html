@@ -17,9 +17,35 @@
         td { padding: 12px; border-bottom: 1px solid #eee; }
         .del-btn { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
         .back-link { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: var(--sidebar-dark); font-weight: bold; }
+     .btn-return:hover { opacity: 0.9; }
+        .back-link { 
+            display: block; 
+            margin-top: 20px; 
+            text-align: center; 
+            color: #7f8c8d; 
+            text-decoration: none; 
+            font-size: 0.9rem; 
+        }
+        .back-link:hover { color: #2c3e50; text-decoration: underline; }
+
+        .btn-back {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-block;
+            color: #333;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .btn-back:hover { background: #f9f9f9; }
     </style>
 </head>
 <body>
+    
+    <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
 <div class="container">
     <h2>👤 Add System User</h2>
     <form id="userForm">
@@ -27,7 +53,6 @@
         <div class="form-group"><label>Password</label><input type="password" id="password" required></div>
         <button type="submit" class="save-btn">Save User</button>
     </form>
-    <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
     <div style="margin-top:40px;">
         <h3>Existing Users</h3>
         <table>

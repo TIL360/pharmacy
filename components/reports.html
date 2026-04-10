@@ -1,156 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
- <meta charset="UTF-8">
-    <!-- Fixes the console warning for offline apps -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:;">
+    <meta charset="UTF-8">
+    <title>Sales Report | PHARMA 2026</title>
+    <!-- Add FontAwesome for icons if not already included -->
+    <link rel="stylesheet" href="../assets/css/all.min.css">
 
-    <title>Sales Report | POS 2026</title>
-    <!-- Font Awesome for Icons -->
-<link rel="stylesheet" href="../assets/css/all.min.css">
     <style>
-        :root {
-            --primary-blue: #1a73e8;
-            --dark-blue: #1557b0;
-            --light-blue: #e8f0fe;
-            --bg-gray: #f1f3f4;
-            --border: #dadce0;
-            --text-main: #3c4043;
-            --text-secondary: #5f6368;
-        }
-
-        body {
-            background-color: var(--bg-gray);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .report-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(60,64,67,0.3);
-            overflow: hidden;
-        }
-
-        /* Header Section */
-        .report-header {
-            background-color: var(--primary-blue);
-            color: white;
-            padding: 20px 30px;
-        }
-
-        .report-header h2 {
-            margin: 0 0 20px 0;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: flex-end;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .input-group label {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            opacity: 0.9;
-        }
-
-        .input-group input {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            outline: none;
-            width: 200px;
-        }
-
-        .btn-generate {
-            background-color: #34a853; /* Success Green */
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-generate:hover {
-            background-color: #2d8e47;
-        }
-
-        /* Table Section */
-        .report-content {
-            padding: 20px;
-            min-height: 400px;
-        }
-
-        .report-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .report-table th {
-            text-align: left;
-            padding: 12px 15px;
-            background-color: #f8f9fa;
-            border-bottom: 2px solid var(--border);
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* Sale Grouping Header */
-        .sale-header-row {
-            background-color: var(--light-blue);
-            color: var(--dark-blue);
-            font-weight: bold;
-        }
-
-        .sale-header-row td {
-            padding: 15px;
-            border-top: 2px solid var(--border);
-        }
-
-        /* Product Detail Rows */
-        .product-detail-row td {
-            padding: 10px 15px 10px 50px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            border-bottom: 1px solid #f1f3f4;
-        }
-
+        /* Basic styling to match your screenshot */
+        body { font-family: sans-serif; background-color: #f4f7f6; margin: 0; }
+        .report-container { max-width: 1200px; margin: 20px auto; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .report-header { background: #3498db; color: white; padding: 20px 30px; }
+        .controls { display: flex; gap: 20px; align-items: flex-end; margin-top: 15px; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label { font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+        .input-group input { padding: 8px; border: none; border-radius: 4px; }
+        .btn-generate { background: #2ecc71; border: none; color: white; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .report-table th { background: #f8f9fa; text-align: left; padding: 12px; border-bottom: 2px solid #dee2e6; color: #666; font-size: 0.9rem; }
+        .report-table td { padding: 12px; border-bottom: 1px solid #eee; }
         .text-right { text-align: right; }
-
-        /* Footer / Totals */
-        .report-footer {
-            padding: 20px 30px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: flex-end;
-            background: #fafafa;
+        .btn-back { text-decoration: none; color: #333; font-weight: bold; font-size: 0.9rem; border: 1px solid #ccc; padding: 5px 15px; border-radius: 4px; }
+        .back-link { 
+            display: block; 
+            margin-top: 20px; 
+            text-align: center; 
+            color: #7f8c8d; 
+            text-decoration: none; 
+            font-size: 0.9rem; 
         }
+        .back-link:hover { color: #2c3e50; text-decoration: underline; }
 
-        .grand-total-display {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--primary-blue);
-        }
-         .btn-back {
+        .btn-back {
             background: #fff;
             border: 1px solid #ccc;
             padding: 8px 15px;
@@ -163,15 +44,14 @@
             font-size: 13px;
         }
         .btn-back:hover { background: #f9f9f9; }
-    </style> 
+    </style>
 </head>
 <body>
 
     <div class="report-container">
         <!-- Dashboard Navigation -->
         <div style="padding: 10px 30px; background: #eee;">
-                <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
-
+    <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
         </div>
 
         <div class="report-header">
@@ -212,71 +92,108 @@
         </div>
 
         <div class="report-footer">
-            <div class="grand-total-display">
-                Grand Total: <span id="grand-total">Rs. 0.00</span>
+            <!-- Payment Method Breakdown -->
+            <div style="display: flex; justify-content: flex-end; gap: 30px; padding: 10px; border-bottom: 1px solid #ddd; color: #555;">
+                <span>Cash: <b id="total-cash">Rs. 0.00</b></span>
+                <span>Online: <b id="total-online">Rs. 0.00</b></span>
+                <span>Bank: <b id="total-bank">Rs. 0.00</b></span>
+            </div>
+            
+            <!-- Grand Total -->
+            <div class="grand-total-display" style="text-align: right; padding: 15px; font-size: 1.4em;">
+                Grand Total: <span id="grand-total" style="color: #27ae60; font-weight: bold;">Rs. 0.00</span>
             </div>
         </div>
     </div>
 
-    <script>
-        async function loadReport() {
-            // FIX: Correctly fetch values from IDs to avoid ReferenceError
-            const dateVal = document.getElementById('report-date').value;
-            const userVal = document.getElementById('report-username').value;
-            const tbody = document.getElementById('report-tbody');
-            const grandTotalEl = document.getElementById('grand-total');
+<script>
+    async function loadReport() {
+        const dateVal = document.getElementById('report-date').value;
+        const userVal = document.getElementById('report-username').value;
+        const tbody = document.getElementById('report-tbody');
+        
+        const grandTotalEl = document.getElementById('grand-total');
+        const cashTotalEl = document.getElementById('total-cash');
+        const onlineTotalEl = document.getElementById('total-online');
+        const bankTotalEl = document.getElementById('total-bank');
 
-            if (!dateVal || !userVal) {
-                alert("Please select both a date and a username.");
+        if (!dateVal || !userVal) {
+            alert("Please select both a date and a username.");
+            return;
+        }
+
+        try {
+            // Fetch updated data from backend
+            const sales = await window.authAPI.getSalesReport({ date: dateVal, username: userVal });
+            
+            let html = '';
+            let grandTotal = 0;
+            let cashTotal = 0;
+            let onlineTotal = 0;
+            let bankTotal = 0;
+
+            if (!sales || sales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:50px; color:#999;">No sales records found.</td></tr>';
+                grandTotalEl.innerText = "Rs. 0.00";
+                cashTotalEl.innerText = "Rs. 0.00";
+                onlineTotalEl.innerText = "Rs. 0.00";
+                bankTotalEl.innerText = "Rs. 0.00";
                 return;
             }
 
-            try {
-                // Call the API (Make sure your IPC handler is updated in main.js)
-                const sales = await window.authAPI.getSalesReport({ date: dateVal, username: userVal });
-                
-                let html = '';
-                let grandTotal = 0;
+            sales.forEach(sale => {
+                const sTotal = Number(sale.total) || 0;
+                grandTotal += sTotal;
 
-                if (!sales || sales.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px;">No sales records found.</td></tr>';
-                    grandTotalEl.innerText = "Rs. 0.00";
-                    return;
+                // Extract Payment Method and normalize to lowercase for logic
+                const method = sale.payment_method ? String(sale.payment_method).trim() : "Unknown";
+                const lowerMethod = method.toLowerCase();
+
+                // Corrected Conditional Logic
+                if (lowerMethod === 'cash') {
+                    cashTotal += sTotal;
+                } else if (lowerMethod === 'online') { 
+                    onlineTotal += sTotal;
+                } else if (lowerMethod === 'bank') {
+                    bankTotal += sTotal;
                 }
 
-                sales.forEach(sale => {
-                    grandTotal += sale.total;
-                    const timeStr = new Date(sale.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const timeStr = new Date(sale.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                    // 1. Add the main Sale Summary Header
+                // Construct UI Rows
+                html += `
+                    <tr class="sale-header-row" style="background: #f8f9fa; font-weight: bold; border-left: 4px solid #3498db;">
+                        <td><i class="fas fa-receipt"></i> SALE #${sale.id} <small style="color:#e67e22;">(${method})</small></td>
+                        <td>${sale.customer}</td>
+                        <td>${timeStr}</td>
+                        <td class="text-right">Rs. ${sTotal.toFixed(2)}</td>
+                    </tr>`;
+
+                sale.items.forEach(item => {
                     html += `
-                        <tr class="sale-header-row">
-                            <td><i class="fas fa-receipt"></i> SALE #${sale.id}</td>
-                            <td>${sale.customer || 'Walking Customer'}</td>
-                            <td>${timeStr}</td>
-                            <td class="text-right">Rs. ${sale.total.toFixed(2)}</td>
+                        <tr style="color: #7f8c8d; font-size: 0.85rem;">
+                            <td style="padding-left: 40px;">PID: ${item.id}</td>
+                            <td>${item.name}</td>
+                            <td>Qty: ${item.qty}</td>
+                            <td class="text-right">@ Rs. ${Number(item.price).toFixed(2)}</td>
                         </tr>`;
-
-                    // 2. Add detailed product rows for this sale
-                    sale.items.forEach(item => {
-                        html += `
-                            <tr class="product-detail-row">
-                                <td>PID: ${item.id}</td>
-                                <td>${item.name}</td>
-                                <td>Qty: ${item.qty}</td>
-                                <td class="text-right">@ Rs. ${item.price.toFixed(2)}</td>
-                            </tr>`;
-                    });
                 });
+            });
 
-                tbody.innerHTML = html;
-                grandTotalEl.innerText = `Rs. ${grandTotal.toFixed(2)}`;
+            // Final UI Update
+            tbody.innerHTML = html;
+            grandTotalEl.innerText = `Rs. ${grandTotal.toFixed(2)}`;
+            cashTotalEl.innerText = `Rs. ${cashTotal.toFixed(2)}`;
+            onlineTotalEl.innerText = `Rs. ${onlineTotal.toFixed(2)}`;
+            bankTotalEl.innerText = `Rs. ${bankTotal.toFixed(2)}`;
 
-            } catch (err) {
-                console.error("Report Generation Error:", err);
-                alert("Error loading report. Check console for details.");
-            }
+        } catch (err) {
+            console.error("Report Error:", err);
         }
-    </script>
+    }
+</script>
+
+
+
 </body>
 </html>

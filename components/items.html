@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Add New Item || Point of Sale 2026</title>
+    <title>Add New Item || Pharma Core 2026</title>
     <style>
         /* Updated to match the "Customer Return History" image colors */
         body { 
@@ -109,11 +109,13 @@
     <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
 
     <div class="form-container">
-        <h2>📦 Add New Product</h2>
+        <h2>💊 Add New Medicine</h2>
+
+
         <form id="itemForm">
             <div class="form-group">
                 <label>Product Name</label>
-                <input type="text" id="name" required placeholder="e.g. Panadol">
+                <input type="text" id="name" required placeholder="e.g. Panadol, Calpol">
             </div>
 
             <div class="row">
@@ -141,8 +143,8 @@
             </div>
 
             <div class="form-group">
-                <label>Min Stock Level (Alert)</label>
-                <input type="number" id="min_stock_level" required placeholder="e.g. 10">
+                <label>Min Stock Level </label>
+                <input type="number" id="min_stock_level" required placeholder="Target Stock to be held">
                 <small style="color: #7f8c8d; font-size: 11px;">You will see a notification when stock falls below this.</small>
             </div>
 

@@ -38,7 +38,7 @@ const {
  
 
 let win;
-Menu.setApplicationMenu(null); 
+// Menu.setApplicationMenu(null); 
 
 function createWindow() {
     // EXPIRY CHECK
@@ -57,6 +57,7 @@ function createWindow() {
         
         width: 1100,
         height: 850,
+        title: "My Application",
         titleBarStyle: "default",
         backgroundColor: "#fdf0d5",
         webPreferences: {

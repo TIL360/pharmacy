@@ -13,12 +13,35 @@ _<!DOCTYPE html>
         th { background-color: #34495e; color: white; }
         tr:hover { background-color: #f1f1f1; }
         .refund-text { color: #e74c3c; font-weight: bold; }
+          .back-link { 
+            display: block; 
+            margin-top: 20px; 
+            text-align: center; 
+            color: #7f8c8d; 
+            text-decoration: none; 
+            font-size: 0.9rem; 
+        }
+        .back-link:hover { color: #2c3e50; text-decoration: underline; }
+
+        .btn-back {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-block;
+            color: #333;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .btn-back:hover { background: #f9f9f9; }
     </style>
 </head>
 <body>
     <div class="card">
         
-        <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+    <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
         <h2>Customer Return History</h2>
         <input type="text" id="search" placeholder="Search by Bill ID or Product..." onkeyup="filterTable()" style="padding: 10px; width: 100%; box-sizing: border-box;">
         

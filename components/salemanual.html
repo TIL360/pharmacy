@@ -140,7 +140,14 @@
             <span>Change Due</span>
             <span id="changeDue">Rs. 0.00</span>
         </div>
-
+<div class="field-group">
+    <label>Payment Method</label>
+    <select id="paymentMethod" style="width: 100%; padding: 12px; border: 2px solid #d9e2ec; border-radius: 8px;">
+        <option value="Cash">Cash</option>
+        <option value="Online">Online Payment</option>
+        <option value="Card">Bank Card</option>
+    </select>
+</div>
         <button class="checkout-btn" onclick="finalizeSale()">Finalize & Print</button>
     </div>
 </div>
@@ -288,6 +295,7 @@
                     <td>${item.price.toFixed(2)}</td>
                     <td style="color:red">-${item.discount.toFixed(2)}</td>
                     <td><strong>${item.total.toFixed(2)}</strong></td>
+                    
                     <td align="center">
                         <button onclick="removeItem(${index})" style="color:red; cursor:pointer; background:none; border:none;">✖</button>
                     </td>
@@ -342,7 +350,8 @@
         discount: globalDisc,      // Ensure this is here
         cashReceived: cashRec,     // Ensure this is here
         changeDue: changeVal,      // Ensure this is here
-        processedBy: user.username 
+        processedBy: user.username,
+        paymentMethod: document.getElementById('paymentMethod').value,
     };
 
         try {

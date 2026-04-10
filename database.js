@@ -5,10 +5,10 @@ const fs = require('fs');
 
 const userDataPath = app.getPath('userData');
 //this line would create db insie appdata
-const dbPath = path.join(userDataPath, 'pharmacy.db');
+// const dbPath = path.join(userDataPath, 'pharmacy.db');
 
 // this would create db file inside the root area of the app
-// const dbPath = path.join(__dirname, 'pharmacy.db');
+const dbPath = path.join(__dirname, 'pharmacy.db');
 
 
 if (!fs.existsSync(userDataPath)) {
@@ -50,6 +50,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS sales (
     total REAL, 
     discount REAL DEFAULT 0.0, 
     cash_received REAL DEFAULT 0.0, 
+    payment_method TEXT, 
     change_due REAL DEFAULT 0.0, 
     sale_date DATETIME DEFAULT CURRENT_TIMESTAMP, 
     processed_by TEXT, 
@@ -174,9 +175,10 @@ function processSaleManual(saleData) {
                 cash_received, 
                 change_due, 
                 processed_by, 
-                sale_date
+                sale_date,
+                payment_method
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+            VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'),?)
         `);
 
         
@@ -186,7 +188,8 @@ function processSaleManual(saleData) {
             saleData.discount,     // Add this
             saleData.cashReceived, // Add this
             saleData.changeDue,    // Add this
-            saleData.processedBy
+            saleData.processedBy,
+            saleData.paymentMethod
         );
         
          const saleId = info.lastInsertRowid;
@@ -612,7 +615,7 @@ function changeUserPassword(currentPass, newPass) {
 function getSalesReportWithDetails(date, username) {
     const sql = `
         SELECT 
-            s.id as sale_id, s.customer_name, s.sale_date, s.total as grand_total,
+            s.id as sale_id, s.customer_name, s.sale_date, s.payment_method, s.total as grand_total,
             si.product_id, p.name as product_name, si.quantity, si.price
         FROM sales s
         JOIN sale_items si ON s.id = si.sale_id
@@ -622,7 +625,6 @@ function getSalesReportWithDetails(date, username) {
     `;
     const rows = db.prepare(sql).all(date, username);
     
-    // Grouping the items by Sale ID
     const report = [];
     rows.forEach(row => {
         let sale = report.find(s => s.id === row.sale_id);
@@ -632,6 +634,7 @@ function getSalesReportWithDetails(date, username) {
                 customer: row.customer_name || 'Walking Customer',
                 time: row.sale_date,
                 total: row.grand_total,
+                payment_method: row.payment_method, // CRITICAL: Add this line
                 items: []
             };
             report.push(sale);
@@ -645,6 +648,7 @@ function getSalesReportWithDetails(date, username) {
     });
     return report;
 }
+
 
 // CRITICAL: ALL FUNCTIONS MUST BE EXPORTED HERE
 module.exports = { 
