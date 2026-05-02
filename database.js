@@ -5,10 +5,10 @@ const fs = require('fs');
 
 const userDataPath = app.getPath('userData');
 //this line would create db insie appdata
-// const dbPath = path.join(userDataPath, 'pharmacy.db');
+const dbPath = path.join(userDataPath, 'pharmacy.db');
 
 // this would create db file inside the root area of the app
-const dbPath = path.join(__dirname, 'pharmacy.db');
+// const dbPath = path.join(__dirname, 'pharmacy.db');
 
 
 if (!fs.existsSync(userDataPath)) {
@@ -27,7 +27,8 @@ const initializeDB = () => {
     price REAL NOT NULL, 
     stock INTEGER DEFAULT 0, 
     min_stock_level INTEGER DEFAULT 0, 
-    category TEXT
+    category TEXT,
+     status TEXT DEFAULT 'Active'
 )`);
         db.exec(`CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL)`);
       // Ensure purchases remains as is, as it holds the batch info
@@ -237,16 +238,24 @@ function updateProduct(data) {
     try {
         const stmt = db.prepare(`
             UPDATE products 
-            SET name = ?, category = ?, cost_price = ?, price = ?, stock = ?, min_stock_level = ? 
+            SET name = ?, 
+                category = ?, 
+                cost_price = ?, 
+                price = ?, 
+                stock = ?, 
+                min_stock_level = ?, 
+                status = ? -- Added this
             WHERE id = ?
         `);
+
         const info = stmt.run(
             data.name, 
             data.category, 
-            data.cost_price, // Ensure this is data.cost_price to match your frontend
+            data.cost_price, 
             data.price, 
             data.stock, 
             data.min_stock_level, 
+            data.status, // Added this
             data.id
         );
         return { success: info.changes > 0 };
@@ -257,6 +266,7 @@ function updateProduct(data) {
 }
 
 
+
 function getReorderList() {
     return db.prepare('SELECT name, stock, min_stock_level, category FROM products WHERE stock <= (min_stock_level * 0.5)').all();
 }
@@ -264,14 +274,46 @@ function getReorderList() {
 // DASHBOARD STATS FUNCTION
 function getDashboardStats() {
     try {
+        // Today's Sales & Orders (Existing)
         const revenue = db.prepare(`SELECT SUM(total) as total FROM sales WHERE date(sale_date) = date('now', 'localtime')`).get().total || 0;
         const orders = db.prepare(`SELECT COUNT(*) as count FROM sales WHERE date(sale_date) = date('now', 'localtime')`).get().count || 0;
-        const lowStock = db.prepare(`SELECT COUNT(*) as count FROM products WHERE stock <= min_stock_level`).get().count || 0;
-        return { success: true, revenue, orders, lowStock };
+        const activeProducts = db.prepare(`SELECT COUNT(*) as count FROM products WHERE status = 'Active'`).get().count || 0;
+        const monthlySales = db.prepare(`SELECT SUM(total) as total FROM sales WHERE strftime('%m', sale_date) = strftime('%m', 'now')`).get().total || 0;
+
+        // --- NEW PROFIT LOGIC ---
+        // Daily Profit: (Sale Price - Cost Price) * Quantity for today's sales
+        const dailyProfit = db.prepare(`
+            SELECT SUM((si.price - p.cost_price) * si.quantity) as profit
+            FROM sale_items si
+            JOIN sales s ON si.sale_id = s.id
+            JOIN products p ON si.product_id = p.id
+            WHERE date(s.sale_date) = date('now', 'localtime')
+        `).get().profit || 0;
+
+        // Monthly Profit: (Sale Price - Cost Price) * Quantity for current month
+        const monthlyProfit = db.prepare(`
+            SELECT SUM((si.price - p.cost_price) * si.quantity) as profit
+            FROM sale_items si
+            JOIN sales s ON si.sale_id = s.id
+            JOIN products p ON si.product_id = p.id
+            WHERE strftime('%m', s.sale_date) = strftime('%m', 'now')
+        `).get().profit || 0;
+
+        return { 
+            success: true, 
+            revenue, 
+            orders, 
+            activeProducts, 
+            monthlySales, 
+            dailyProfit, 
+            monthlyProfit 
+        };
     } catch (error) {
         return { success: false, error: error.message };
     }
 }
+
+
 
 //low stcok function
 function getLowStockReport() {
@@ -507,11 +549,14 @@ function searchBatchesByName(query) {
             pur.quantity as batch_stock
         FROM purchases pur
         JOIN products p ON pur.product_id = p.id
-        WHERE p.name LIKE ? AND pur.quantity > 0
+        WHERE (p.name LIKE ? OR pur.batch_no LIKE ?) AND pur.quantity > 0
         ORDER BY pur.expiry_date ASC
     `;
-    return db.prepare(sql).all(`%${query}%`);
+    const searchVal = `%${query}%`;
+    return db.prepare(sql).all(searchVal, searchVal);
 }
+
+
 function deleteCategory(id) {
     return db.prepare('DELETE FROM categories WHERE id = ?').run(id);
 }

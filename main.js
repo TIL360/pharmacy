@@ -7,7 +7,7 @@ const fs = require('fs');
 const { shell } = require('electron'); // Add this at the top
 
 // 1. EXPIRY CONFIGURATION
-const EXPIRY_DATE = new Date(2026, 6, 30); // Dec 31, 2025 (Format: Year, Month-1, Day)
+const EXPIRY_DATE = new Date(2026, 4, 30); // Dec 31, 2025 (Format: Year, Month-1, Day)
 
 // 2. IMPORT FROM DATABASE.JS
 const { 
@@ -340,17 +340,22 @@ ipcMain.handle('process-supplier-return', async (event, data) => {
     return processSupplierReturn(data); 
 });
 
-ipcMain.handle('update-product-stock-level', async (event, id, newLevel) => {
+ipcMain.handle('update-product-status-and-stock', async (event, { id, newLevel, newStatus }) => {
     try {
-        const sql = `UPDATE products SET min_stock_level = ? WHERE id = ?`;
+        // Updated SQL to set both columns
+        const sql = `UPDATE products SET min_stock_level = ?, status = ? WHERE id = ?`;
         const stmt = db.prepare(sql);
-        stmt.run(newLevel, id);
+        
+        // Ensure parameters are passed in the same order as the '?' in the SQL
+        stmt.run(newLevel, newStatus, id);
+        
         return { success: true };
     } catch (err) {
         console.error("Database Error:", err);
         return { success: false, error: err.message };
     }
 });
+
 
 //low stock report ends
 //expiry reports starts

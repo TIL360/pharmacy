@@ -2,376 +2,247 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Manual Billing | Pharmacy POS 2026</title>
+    <title>Professional Billing | PHARMA CORE</title>
     <style>
-        :root {
-            --medical-blue: #102a43;
-            --teal-accent: #3ebd93;
-            --bg-light: #f0f4f8;
-            --white: #ffffff;
-            --danger: #ef4e4e;
-            --text-dark: #243b53;
-        }
-
+        :root { --medical-blue: #102a43; --teal-accent: #3ebd93; --bg-light: #f0f4f8; --white: #ffffff; --danger: #ef4e4e; --text-dark: #243b53; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-light); margin: 0; display: flex; flex-direction: column; height: 100vh; color: var(--text-dark); }
         
-        .billing-header { background: var(--medical-blue); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-
-        .main-container { display: grid; grid-template-columns: 1fr 400px; flex: 1; overflow: hidden; }
-
-        .entry-side { padding: 30px; overflow-y: auto; }
-
-        /* --- Search & Entry Bar (Preserving your logic) --- */
+        /* Layout */
+        .billing-header { background: var(--medical-blue); color: white; padding: 10px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--teal-accent); }
+        .main-container { display: grid; grid-template-columns: 1fr 380px; flex: 1; overflow: hidden; }
+        .entry-side { padding: 20px; overflow-y: auto; }
         .entry-bar {
-            background: var(--white); padding: 20px; border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px;
-            display: grid; grid-template-columns: 2fr 0.8fr 0.8fr 1fr; gap: 15px; align-items: end;
+            background: var(--white); padding: 15px; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px;
+            display: grid; grid-template-columns: 2.5fr 0.6fr 0.6fr 1fr 0.8fr; gap: 12px; align-items: end;
         }
-
         .field-group { position: relative; }
-        .field-group label { display: block; font-size: 11px; font-weight: 700; color: #829ab1; text-transform: uppercase; margin-bottom: 5px; }
+        .field-group label { display: block; font-size: 10px; font-weight: 700; color: #829ab1; text-transform: uppercase; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 10px; border: 2px solid #d9e2ec; border-radius: 6px; font-size: 13px; box-sizing: border-box; outline: none; }
         
-        input { 
-            width: 100%; padding: 12px; border: 2px solid #d9e2ec; border-radius: 8px; 
-            font-size: 14px; box-sizing: border-box; outline: none; transition: 0.3s;
-        }
-        input:focus { border-color: var(--medical-blue); }
-
-        /* --- Search Results Dropdown --- */
-        #search-results { 
-            position: absolute; width: 100%; background: white; border: 1px solid #ddd; 
-            border-radius: 0 0 8px 8px; z-index: 1000; max-height: 200px; overflow-y: auto; 
-            display: none; box-shadow: 0 8px 16px rgba(0,0,0,0.1); top: 100%;
-        }
-        .search-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f1f1; font-size: 13px; }
+        /* Search Dropdown */
+        #search-results { position: absolute; width: 100%; background: white; border: 1px solid #ddd; z-index: 1000; max-height: 250px; overflow-y: auto; display: none; box-shadow: 0 8px 16px rgba(0,0,0,0.1); top: 100%; }
+        .search-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f1f1; font-size: 12px; }
         .search-item:hover, .search-item.selected { background-color: var(--medical-blue); color: white; }
 
-        .btn-add { background: var(--medical-blue); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 45px; }
+        /* UI Table */
+        .bill-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        .bill-table th { background: var(--medical-blue); color: white; padding: 12px; text-align: left; font-size: 12px; }
+        .bill-table td { padding: 10px 12px; border-bottom: 1px solid #f0f4f8; font-size: 13px; }
 
-        /* --- Table --- */
-        .bill-table { width: 100%; border-collapse: collapse; background: white; border-radius: 15px; overflow: hidden; }
-        .bill-table th { background: #f0f4f8; color: var(--medical-blue); padding: 15px; text-align: left; }
-        .bill-table td { padding: 15px; border-bottom: 1px solid #f0f4f8; }
+        /* Sidebar */
+        .summary-side { background: var(--white); border-left: 1px solid #d9e2ec; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .total-display { background: #f0fdf9; border: 2px solid var(--teal-accent); padding: 15px; border-radius: 10px; text-align: center; }
+        .total-display span { font-size: 32px; font-weight: 800; color: var(--teal-accent); }
+        .calc-row { display: flex; justify-content: space-between; font-weight: 600; color: #486581; font-size: 14px; }
+        .checkout-btn { width: 100%; padding: 15px; background: var(--medical-blue); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
 
-        /* --- Summary Sidebar --- */
-        .summary-side { background: var(--white); border-left: 1px solid #d9e2ec; padding: 30px; display: flex; flex-direction: column; gap: 15px; }
-        
-        .total-display { background: #f0fdf9; border: 2px solid var(--teal-accent); padding: 20px; border-radius: 15px; text-align: center; }
-        .total-display span { font-size: 38px; font-weight: 800; color: var(--teal-accent); }
-
-        .calc-row { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #486581; }
-        
-        .checkout-btn { width: 100%; padding: 18px; background: var(--medical-blue); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; margin-top: 10px; }
-        
-        @media print { .no-print { display: none !important; } }
+        /* Receipt Print Pattern */
+        #print-area { display: none; font-family: 'Courier New', Courier, monospace; width: 80mm; padding: 5mm; color: #000; }
+        @media print {
+            .no-print { display: none !important; }
+            #print-area { display: block !important; }
+        }
     </style>
 </head>
 <body>
 
 <div class="billing-header no-print">
-    <div style="font-weight: 800;">🛍️ SALE POINT || PHARMA CORE 2026</div>
-    <div id="liveClock" style="font-size: 14px;"></div>
-    <button onclick="location.reload()" style="background:rgba(255,255,255,0.1); border:none; color:white; padding:8px 15px; border-radius:5px; cursor:pointer;">Refresh</button>
+    <div style="font-weight: 800; font-size: 18px;">🛒 PHARMA CORE | POINT OF SALE</div>
+    <div id="liveClock"></div>
+    <button onclick="location.reload()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:5px 12px; border-radius:4px; cursor:pointer;">Refresh</button>
 </div>
 
 <div class="main-container no-print">
     <div class="entry-side">
-        <!-- Input Bar with your Requisite Logic -->
         <div class="entry-bar">
             <div class="field-group">
-                <label>Search Product (Name)</label>
+                <label>Product Search</label>
                 <input type="text" id="productSearch" placeholder="Type name..." autocomplete="off">
                 <div id="search-results"></div>
             </div>
-            <div class="field-group">
-                <label>Qty</label>
-                <input type="number" id="tempQty" value="1" min="1">
-            </div>
-            <div class="field-group">
-                <label>Disc (Rs.)</label>
-                <input type="number" id="lineDiscount" value="0">
-            </div>
-            <button class="btn-add" onclick="addItemToBill()">Add (Enter)</button>
+            <div class="field-group"><label>Qty</label><input type="number" id="tempQty" value="1" min="1"></div>
+            <div class="field-group"><label>Disc %</label><input type="number" id="lineDiscPercent" value="0" min="0"></div>
+            <div class="field-group"><label>Batch / Expiry</label><input type="text" id="batchDisplay" disabled style="background:#f1f5f9;"></div>
+            <button class="checkout-btn" onclick="addItemToBill()" style="height: 42px;">ADD</button>
         </div>
-
         <table class="bill-table">
-            <thead>
-                <tr>
-                    <th>S.No</th>
-                    <th>Description</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Disc</th>
-                    <th>Total</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
+            <thead><tr><th>#</th><th>Description</th><th>Batch</th><th>Qty</th><th>Price</th><th>Disc</th><th>Total</th><th></th></tr></thead>
             <tbody id="billBody"></tbody>
         </table>
     </div>
-<!-- summar  -->
+
     <div class="summary-side">
+        <div class="field-group"><label>Customer</label><input type="text" id="custName" value="General Customer"></div>
+        <div class="calc-row"><span>Sub-Total</span><span id="subTotalDisp">0.00</span></div>
+        <div class="field-group"><label>Flat Disc (Rs.)</label><input type="number" id="globalDiscount" value="0" oninput="calculateTotal()"></div>
+        <div class="total-display"><small>PAYABLE AMOUNT</small><br><span id="finalDisplay">0.00</span></div>
+        <div class="field-group"><label>Cash Received</label><input type="number" id="cashReceived" oninput="updateChangeDisplay()" style="font-size: 22px; font-weight: bold;"></div>
+        <div class="calc-row"><span>Change Due</span><span id="changeDue">Rs. 0.00</span></div>
         <div class="field-group">
-            <label>Customer Name</label>
-            <input type="text" id="custName" value="General Customer">
+            <label>Method</label>
+            <select id="paymentMethod"><option value="Cash">Cash</option>
+                <option value="Card">Card</option>
+                 <option value="Online">Online</option>
+            </select>
         </div>
-
-        <div class="calc-row">
-            <span>Sub-Total</span>
-            <span id="subTotalDisp">0.00</span>
-        </div>
-
-        <div class="field-group">
-            <label>Global Discount (Rs.)</label>
-            <input type="number" id="globalDiscount" value="0" oninput="calculateTotal()">
-        </div>
-
-        <div class="total-display">
-            <small style="color: #627d98; font-weight: 700;">PAYABLE AMOUNT (RS.)</small><br>
-            <span id="finalDisplay">0.00</span>
-        </div>
-
-        <div class="field-group">
-            <label>Cash Received</label>
-            <input type="number" id="cashReceived" oninput="calculateTotal()" style="font-size: 20px; font-weight: 700; color: var(--medical-blue);">
-        </div>
-
-        <div class="calc-row">
-            <span>Change Due</span>
-            <span id="changeDue">Rs. 0.00</span>
-        </div>
-<div class="field-group">
-    <label>Payment Method</label>
-    <select id="paymentMethod" style="width: 100%; padding: 12px; border: 2px solid #d9e2ec; border-radius: 8px;">
-        <option value="Cash">Cash</option>
-        <option value="Online">Online Payment</option>
-        <option value="Card">Bank Card</option>
-    </select>
-</div>
-        <button class="checkout-btn" onclick="finalizeSale()">Finalize & Print</button>
+        <button class="checkout-btn" onclick="finalizeSale()" style="background:var(--teal-accent)">FINALIZE & PRINT</button>
     </div>
 </div>
 
-<!-- [Hidden Print Receipt Area here - Same as your Page 11] -->
+<!-- Updated Multi-Column Receipt Pattern -->
+<div id="print-area">
+    <div style="text-align:center; font-weight:bold; font-size:16px;">PHARMA CORE</div>
+    <div style="text-align:center; font-size:12px;">Islamabad, Pakistan | 03xx-xxxxxx</div>
+    <div style="border-bottom:1px dashed #000; margin:10px 0;"></div>
+    <div style="font-size:11px; display:flex; justify-content:space-between;"><span>Bill: <strong id="p-billId"></strong></span><span id="p-date"></span></div>
+    <div style="font-size:11px;">Cust: <span id="p-customer"></span></div>
+    <div style="border-bottom:1px dashed #000; margin:10px 0;"></div>
+    
+    <table style="width:100%; font-size:10px; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 1px solid #000;">
+                <th align="left" style="width: 45%;">Product</th>
+                <th align="center" style="width: 15%;">Qty</th>
+                <th align="center" style="width: 20%;">Price</th>
+                <th align="right" style="width: 20%;">Total</th>
+            </tr>
+        </thead>
+        <tbody id="p-items"></tbody>
+    </table>
+    
+    <div style="border-bottom:1px dashed #000; margin:10px 0;"></div>
+    <div style="display:flex; justify-content:space-between; font-size:11px;"><span>Sub-Total:</span><span id="p-subtotal"></span></div>
+    <div style="display:flex; justify-content:space-between; font-size:11px;"><span>Total Disc:</span><span id="p-disc"></span></div>
+    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:13px; margin-top:5px;"><span>NET PAYABLE:</span><span id="p-grand"></span></div>
+    <div style="border-bottom:1px dashed #000; margin:10px 0;"></div>
+    <div style="display:flex; justify-content:space-between; font-size:10px;"><span>Cash Paid:</span><span id="p-paid"></span></div>
+    <div style="display:flex; justify-content:space-between; font-size:10px;"><span>Return:</span><span id="p-change"></span></div>
+    <div style="text-align:center; margin-top:12px; font-size:10px;">*** Thank You ***</div>
+</div>
 
 <script>
-    // --- 1. STATE & VARIABLES ---
     let billItems = [];
     let currentBatch = null;
     let selectedIndex = -1;
-    
-    // DOM Elements
+    let filteredBatches = [];
+
     const searchInput = document.getElementById('productSearch');
     const resultsDiv = document.getElementById('search-results');
     const qtyInput = document.getElementById('tempQty');
-    const discInput = document.getElementById('lineDiscount');
-    const billBody = document.getElementById('billBody');
-    const cashInp = document.getElementById('cashReceived');
-    const globalDiscInp = document.getElementById('globalDiscount');
+    const lineDiscInput = document.getElementById('lineDiscPercent');
 
-    // --- 2. LIVE UPDATES (CLOCK & CHANGE) ---
-    setInterval(() => {
-        const clock = document.getElementById('liveClock');
-        if (clock) clock.innerText = new Date().toLocaleString();
-    }, 1000);
+    setInterval(() => { document.getElementById('liveClock').innerText = new Date().toLocaleString(); }, 1000);
 
-    // Live Change Calculation as you type
-    cashInp.addEventListener('input', updateChangeDisplay);
-    globalDiscInp.addEventListener('input', calculateTotal);
-
-    function updateChangeDisplay() {
-        const grandTotal = parseFloat(document.getElementById('finalDisplay').innerText) || 0;
-        const cash = parseFloat(cashInp.value) || 0;
-        const change = cash - grandTotal;
-        
-        const changeDisplay = document.getElementById('changeDue');
-        changeDisplay.innerText = `Rs. ${change.toFixed(2)}`;
-        changeDisplay.style.color = change < 0 ? 'red' : '#2c3e50';
-    }
-
-    // --- 3. SEARCH LOGIC ---
+    // 1. Search Logic
     searchInput.addEventListener('input', async (e) => {
         const query = e.target.value.trim();
         if (query.length < 2) { resultsDiv.style.display = 'none'; return; }
-        try {
-            const batches = await window.authAPI.searchBatchesByName(query);
-            resultsDiv.innerHTML = '';
-            selectedIndex = -1;
-            if (batches && batches.length > 0) {
-                resultsDiv.style.display = 'block';
-                batches.forEach((b, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'search-item';
-                    div.id = `batch-item-${index}`;
-                    div.innerHTML = `<strong>${b.name}</strong> (Rs. ${b.price})<br><small>Stock: ${b.batch_stock} | Exp: ${b.expiry_date}</small>`;
-                    div.onclick = () => selectBatch(b);
-                    resultsDiv.appendChild(div);
-                });
-            } else { resultsDiv.style.display = 'none'; }
-        } catch (err) { console.error(err); }
+        filteredBatches = await window.authAPI.searchBatchesByName(query);
+        renderResults();
     });
 
-    // --- 4. KEYBOARD NAVIGATION ---
+    function renderResults() {
+        resultsDiv.innerHTML = '';
+        selectedIndex = -1;
+        if (filteredBatches.length > 0) {
+            resultsDiv.style.display = 'block';
+            filteredBatches.forEach((b, i) => {
+                const div = document.createElement('div');
+                div.className = 'search-item';
+                div.innerHTML = `<strong>${b.name}</strong><br><small>${b.batch_no} | Stock: ${b.batch_stock}</small>`;
+                div.onclick = () => selectBatch(b);
+                resultsDiv.appendChild(div);
+            });
+        } else { resultsDiv.style.display = 'none'; }
+    }
+
+    // 2. Keyboard Control (Arrows + Enter)
     document.addEventListener('keydown', (e) => {
         const items = resultsDiv.getElementsByClassName('search-item');
-        if (resultsDiv.style.display === 'block' && items.length > 0) {
-            if (e.key === 'ArrowDown') { 
-                e.preventDefault(); 
-                selectedIndex = (selectedIndex + 1) % items.length; 
-                updateHighlight(items); 
-            }
-            else if (e.key === 'ArrowUp') { 
-                e.preventDefault(); 
-                selectedIndex = (selectedIndex - 1 + items.length) % items.length; 
-                updateHighlight(items); 
-            }
+        if (resultsDiv.style.display === 'block') {
+            if (e.key === 'ArrowDown') { e.preventDefault(); selectedIndex = (selectedIndex + 1) % items.length; updateHighlight(items); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); selectedIndex = (selectedIndex - 1 + items.length) % items.length; updateHighlight(items); }
         }
-        
         if (e.key === 'Enter') {
             const active = document.activeElement;
-            if (active === searchInput && selectedIndex > -1) {
-                items[selectedIndex].click();
-            } else if (active === qtyInput) {
-                e.preventDefault(); 
-                discInput.focus(); 
-                discInput.select();
-            } else if (active === discInput) {
-                e.preventDefault(); 
-                addItemToBill();
-            }
+            if (active === searchInput && selectedIndex > -1) { selectBatch(filteredBatches[selectedIndex]); }
+            else if (active === searchInput && currentBatch) { qtyInput.focus(); qtyInput.select(); }
+            else if (active === qtyInput) { lineDiscInput.focus(); lineDiscInput.select(); }
+            else if (active === lineDiscInput) { addItemToBill(); }
         }
     });
 
     function updateHighlight(items) {
-        for (let i = 0; i < items.length; i++) items[i].classList.remove('selected');
-        if (selectedIndex > -1) {
-            items[selectedIndex].classList.add('selected');
-            items[selectedIndex].scrollIntoView({ block: 'nearest' });
-        }
+        Array.from(items).forEach(i => i.classList.remove('selected'));
+        if (items[selectedIndex]) { items[selectedIndex].classList.add('selected'); items[selectedIndex].scrollIntoView({ block: 'nearest' }); }
     }
 
     function selectBatch(batch) {
         currentBatch = batch;
-        searchInput.value = `${batch.name} [${batch.batch_no}]`;
+        searchInput.value = batch.name;
+        document.getElementById('batchDisplay').value = `${batch.batch_no} (${batch.expiry_date})`;
         resultsDiv.style.display = 'none';
-        qtyInput.focus(); 
-        qtyInput.select();
+        qtyInput.focus();
     }
 
-    // --- 5. ADD ITEM & RENDER ---
     function addItemToBill() {
-        if (!currentBatch) { alert("Select product first"); searchInput.focus(); return; }
+        if(!currentBatch) return;
         const qty = parseInt(qtyInput.value) || 0;
-        const disc = parseFloat(discInput.value) || 0;
+        const discPerc = parseFloat(lineDiscInput.value) || 0;
+        const totalBefore = currentBatch.price * qty;
+        const discAmt = totalBefore * (discPerc / 100);
         
-        if (qty <= 0) return alert("Invalid Qty");
-        if (qty > currentBatch.batch_stock) return alert("Stock Shortage!");
-
-        const lineTotal = (currentBatch.price * qty) - disc;
-        
-        billItems.push({
-            id: currentBatch.product_id, 
-            batch: currentBatch.batch_no,
-            name: currentBatch.name, 
-            qty: qty, 
-            price: currentBatch.price,
-            discount: disc, 
-            total: lineTotal
-        });
-        
-        renderBill();
+        billItems.push({ id: currentBatch.product_id, name: currentBatch.name, batch: currentBatch.batch_no, qty: qty, price: currentBatch.price, discount: discAmt, total: totalBefore - discAmt });
+        renderTable();
         resetInputs();
     }
 
-    function renderBill() {
+    function renderTable() {
         let subtotal = 0;
-        billBody.innerHTML = billItems.map((item, index) => {
-            subtotal += item.total;
-            return `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${item.name}</td>
-                    <td>${item.qty}</td>
-                    <td>${item.price.toFixed(2)}</td>
-                    <td style="color:red">-${item.discount.toFixed(2)}</td>
-                    <td><strong>${item.total.toFixed(2)}</strong></td>
-                    
-                    <td align="center">
-                        <button onclick="removeItem(${index})" style="color:red; cursor:pointer; background:none; border:none;">✖</button>
-                    </td>
-                </tr>`;
+        document.getElementById('billBody').innerHTML = billItems.map((it, i) => {
+            subtotal += it.total;
+            return `<tr><td>${i+1}</td><td>${it.name}</td><td>${it.batch}</td><td>${it.qty}</td><td>${it.price}</td><td style="color:red">-${it.discount.toFixed(1)}</td><td>${it.total.toFixed(2)}</td><td><button onclick="removeItem(${i})" style="border:none; background:none; cursor:pointer">✖</button></td></tr>`;
         }).join('');
-        
         document.getElementById('subTotalDisp').innerText = subtotal.toFixed(2);
         calculateTotal();
     }
 
-    function removeItem(idx) { 
-        billItems.splice(idx, 1); 
-        renderBill(); 
-    }
-
-    function resetInputs() {
-        currentBatch = null; 
-        selectedIndex = -1;
-        searchInput.value = ""; 
-        qtyInput.value = "1"; 
-        discInput.value = "0";
-        searchInput.focus();
-    }
-
-    // --- 6. CALCULATIONS ---
     function calculateTotal() {
-        const subtotal = billItems.reduce((acc, item) => acc + item.total, 0);
-        const globalDisc = parseFloat(globalDiscInp.value) || 0;
-        const grandTotal = subtotal - globalDisc;
-        
-        document.getElementById('finalDisplay').innerText = grandTotal.toFixed(2);
+        const sub = parseFloat(document.getElementById('subTotalDisp').innerText);
+        const global = parseFloat(document.getElementById('globalDiscount').value) || 0;
+        document.getElementById('finalDisplay').innerText = (sub - global).toFixed(2);
         updateChangeDisplay();
     }
 
-       // --- 7. FINALIZE (SAVES ALL DATA TO DB) ---
-   async function finalizeSale() {
-    if (billItems.length === 0) return alert("Bill is empty!");
-
-    const userSession = sessionStorage.getItem('currentUser');
-    const user = userSession ? JSON.parse(userSession) : { username: 'Admin' };
-
-    // COLLECT THE MISSING VALUES
-    const finalTotal = parseFloat(document.getElementById('finalDisplay').innerText) || 0;
-    const globalDisc = parseFloat(document.getElementById('globalDiscount').value) || 0;
-    const cashRec = parseFloat(document.getElementById('cashReceived').value) || 0;
-    const changeVal = cashRec - finalTotal;
-
-       const saleData = {
-        customerName: document.getElementById('custName').value || "General Customer",
-        items: billItems,
-        total: finalTotal,
-        discount: globalDisc,      // Ensure this is here
-        cashReceived: cashRec,     // Ensure this is here
-        changeDue: changeVal,      // Ensure this is here
-        processedBy: user.username,
-        paymentMethod: document.getElementById('paymentMethod').value,
-    };
-
-        try {
-            const result = await window.authAPI.processSaleManual(saleData);
-            if (result.success) {
-                alert(`Sale #${result.saleId} Saved Successfully!`);
-                // If you want to print, trigger your print function here
-                location.reload(); 
-            } else {
-                alert("Database Error: " + result.error);
-            }
-        } catch (err) {
-            alert("System Error: " + err.message);
-        }
+    function updateChangeDisplay() {
+        const grand = parseFloat(document.getElementById('finalDisplay').innerText);
+        const paid = parseFloat(document.getElementById('cashReceived').value) || 0;
+        document.getElementById('changeDue').innerText = `Rs. ${(paid - grand).toFixed(2)}`;
     }
 
-    document.addEventListener('click', (e) => { 
-        if (e.target !== searchInput) resultsDiv.style.display = 'none'; 
-    });
-</script>
+    async function finalizeSale() {
+        if(billItems.length === 0) return;
+        const saleData = { customerName: document.getElementById('custName').value, items: billItems, total: parseFloat(document.getElementById('finalDisplay').innerText), discount: parseFloat(document.getElementById('globalDiscount').value) || 0, cashReceived: parseFloat(document.getElementById('cashReceived').value) || 0, changeDue: parseFloat(document.getElementById('changeDue').innerText.replace('Rs. ', '')), paymentMethod: document.getElementById('paymentMethod').value, processedBy: "Admin" };
+        const res = await window.authAPI.processSaleManual(saleData);
+        if(res.success) { prepareReceipt(saleData, res.saleId); window.print(); location.reload(); }
+    }
 
+    function prepareReceipt(data, id) {
+        document.getElementById('p-billId').innerText = id;
+        document.getElementById('p-date').innerText = new Date().toLocaleString();
+        document.getElementById('p-customer').innerText = data.customerName;
+        document.getElementById('p-items').innerHTML = data.items.map(it => `<tr><td>${it.name}<br><small>Batch:${it.batch}</small></td><td align="center">${it.qty}</td><td align="center">${it.price.toFixed(2)}</td><td align="right">${it.total.toFixed(2)}</td></tr>`).join('');
+        const subTotalVal = data.items.reduce((acc, it) => acc + (it.price * it.qty), 0);
+        document.getElementById('p-subtotal').innerText = subTotalVal.toFixed(2);
+        document.getElementById('p-disc').innerText = (subTotalVal - data.total).toFixed(2);
+        document.getElementById('p-grand').innerText = data.total.toFixed(2);
+        document.getElementById('p-paid').innerText = data.cashReceived.toFixed(2);
+        document.getElementById('p-change').innerText = data.changeDue.toFixed(2);
+    }
+
+    function resetInputs() { currentBatch = null; searchInput.value = ""; document.getElementById('batchDisplay').value = ""; qtyInput.value = 1; lineDiscInput.value = 0; searchInput.focus(); }
+    function removeItem(i) { billItems.splice(i, 1); renderTable(); }
+</script>
 </body>
 </html>

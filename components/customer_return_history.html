@@ -1,92 +1,219 @@
-_<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    
-    
     <title>Customer Return History</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f7f6; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
-        th { background-color: #34495e; color: white; }
-        tr:hover { background-color: #f1f1f1; }
-        .refund-text { color: #e74c3c; font-weight: bold; }
-          .back-link { 
-            display: block; 
-            margin-top: 20px; 
-            text-align: center; 
-            color: #7f8c8d; 
-            text-decoration: none; 
-            font-size: 0.9rem; 
+        :root { 
+            --sidebar-dark: #34495e; 
+            --accent-orange: #e67e22; 
+            --bg-page: #f4f7f6; 
         }
-        .back-link:hover { color: #2c3e50; text-decoration: underline; }
-
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            padding: 20px; 
+            background: var(--bg-page); 
+        }
+        .card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+            max-width: 1200px; 
+            margin: auto; 
+        }
+        .header-section { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+        }
         .btn-back {
-            background: #fff;
-            border: 1px solid #ccc;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 20px;
-            display: inline-block;
-            color: #333;
-            text-decoration: none;
-            font-size: 13px;
+            background: #fff; 
+            border: 1px solid #ccc; 
+            padding: 8px 15px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            margin-bottom: 20px; 
+            display: inline-block; 
+            color: #333; 
+            text-decoration: none; 
+            font-size: 13px; 
+            font-weight: 600;
         }
         .btn-back:hover { background: #f9f9f9; }
+
+        /* Search Box */
+        .search-container { margin-bottom: 20px; }
+        #search { 
+            padding: 12px 15px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            border: 1.5px solid #dee2e6; 
+            border-radius: 6px; 
+            font-size: 15px; 
+        }
+        #search:focus { outline: none; border-color: var(--accent-orange); }
+
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+        th { 
+            background-color: var(--sidebar-dark); 
+            color: white; 
+            text-transform: uppercase; 
+            font-size: 12px; 
+            letter-spacing: 0.5px; 
+        }
+        tr:hover { background-color: #f9f9f9; }
+        .refund-text { color: #e74c3c; font-weight: bold; }
+
+        /* Pagination Styling */
+        .pagination-nav { 
+            margin-top: 20px; 
+            display: flex; 
+            justify-content: center; 
+            gap: 10px; 
+            align-items: center; 
+        }
+        .btn-page { 
+            background: white; 
+            border: 1px solid #ccc; 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+        .btn-page:disabled { cursor: not-allowed; opacity: 0.5; }
+        .btn-page.active {
+            background-color: var(--accent-orange);
+            color: white;
+            border-color: var(--accent-orange);
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        
+
+<div class="card">
     <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
-        <h2>Customer Return History</h2>
-        <input type="text" id="search" placeholder="Search by Bill ID or Product..." onkeyup="filterTable()" style="padding: 10px; width: 100%; box-sizing: border-box;">
-        
-        <table id="historyTable">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Bill #</th>
-                    <th>Product</th>
-                    <th>Qty Returned</th>
-                    <th>Refund Amount</th>
-                </tr>
-            </thead>
-            <tbody id="historyBody">
-                <!-- Data populated by JS -->
-            </tbody>
-        </table>
+    
+    <div class="header-section">
+        <h2 style="margin: 0; color: var(--sidebar-dark);">📋 Customer Return History</h2>
     </div>
 
-    <script>
-        async function loadHistory() {
-            const history = await window.authAPI.getReturnHistory();
-            const body = document.getElementById('historyBody');
-            
-            body.innerHTML = history.map(row => `
+    <div class="search-container">
+        <input type="text" id="search" placeholder="Search by Bill ID or Product Name..." onkeyup="filterTable()">
+    </div>
+
+    <table id="historyTable">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Bill #</th>
+                <th>Product</th>
+                <th>Qty Returned</th>
+                <th>Refund Amount</th>
+            </tr>
+        </thead>
+        <tbody id="historyBody">
+            <!-- Data will be injected here -->
+        </tbody>
+    </table>
+
+    <div id="paginationNav" class="pagination-nav"></div>
+</div>
+
+<script>
+    let allRecords = [];
+    let currentPage = 1;
+    const recordsPerPage = 10;
+
+    // Load data from database when page opens
+    async function loadReturnHistory() {
+        try {
+            // Calling the API exposed in preload.js
+            allRecords = await window.authAPI.getReturnHistory();
+            renderTable();
+        } catch (err) {
+            console.error("Error loading history:", err);
+            document.getElementById('historyBody').innerHTML = 
+                '<tr><td colspan="5" style="text-align:center; color:red;">Error loading data from database.</td></tr>';
+        }
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('historyBody');
+        const searchTerm = document.getElementById('search').value.toLowerCase();
+
+        // Filter based on search input
+        const filtered = allRecords.filter(rec => 
+            rec.product_name.toLowerCase().includes(searchTerm) || 
+            rec.sale_id.toString().includes(searchTerm)
+        );
+
+        // Pagination Logic
+        const totalPages = Math.ceil(filtered.length / recordsPerPage);
+        const startIndex = (currentPage - 1) * recordsPerPage;
+        const paginatedData = filtered.slice(startIndex, startIndex + recordsPerPage);
+
+        // Populate Table
+        if (paginatedData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">No return records found.</td></tr>';
+        } else {
+            tbody.innerHTML = paginatedData.map(rec => `
                 <tr>
-                    <td>${new Date(row.return_date).toLocaleString()}</td>
-                    <td>#${row.sale_id}</td>
-                    <td>${row.product_name}</td>
-                    <td>${row.quantity_returned}</td>
-                    <td class="refund-text">Rs. ${row.refund_amount.toFixed(2)}</td>
+                    <td>${new Date(rec.return_date).toLocaleDateString()}</td>
+                    <td>#${rec.sale_id}</td>
+                    <td>${rec.product_name}</td>
+                    <td>${rec.quantity_returned}</td>
+                    <td class="refund-text">Rs. ${rec.refund_amount.toFixed(2)}</td>
                 </tr>
             `).join('');
         }
 
-        function filterTable() {
-            const input = document.getElementById("search").value.toUpperCase();
-            const rows = document.getElementById("historyTable").getElementsByTagName("tr");
-            for (let i = 1; i < rows.length; i++) {
-                rows[i].style.display = rows[i].innerText.toUpperCase().includes(input) ? "" : "none";
-            }
+        updatePaginationUI(totalPages);
+    }
+
+    function updatePaginationUI(totalPages) {
+        const nav = document.getElementById('paginationNav');
+        nav.innerHTML = '';
+
+        if (totalPages <= 1) return;
+
+        // Previous
+        const prev = document.createElement('button');
+        prev.className = 'btn-page';
+        prev.innerText = '«';
+        prev.disabled = currentPage === 1;
+        prev.onclick = () => { currentPage--; renderTable(); };
+        nav.appendChild(prev);
+
+        // Numbers
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.className = `btn-page ${i === currentPage ? 'active' : ''}`;
+            btn.innerText = i;
+            btn.onclick = () => { currentPage = i; renderTable(); };
+            nav.appendChild(btn);
         }
 
-        // Load data on page open
-        loadHistory();
-    </script>
+        // Next
+        const next = document.createElement('button');
+        next.className = 'btn-page';
+        next.innerText = '»';
+        next.disabled = currentPage === totalPages;
+        next.onclick = () => { currentPage++; renderTable(); };
+        nav.appendChild(next);
+    }
+
+    function filterTable() {
+        currentPage = 1; // Reset to first page on search
+        renderTable();
+    }
+
+    // Initialize the page
+    loadReturnHistory();
+</script>
+
 </body>
 </html>

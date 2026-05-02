@@ -10,71 +10,103 @@
         h2, h3 { color: var(--sidebar-dark); margin-top: 0; border-bottom: 2px solid var(--bg-page); padding-bottom: 10px; text-transform: uppercase; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; color: #444; font-size: 0.9rem; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
         button.save-btn { background: var(--accent-orange); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; text-transform: uppercase; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { background: var(--sidebar-dark); color: white; padding: 12px; text-align: left; font-size: 0.8rem; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
         .del-btn { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-        .back-link { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: var(--sidebar-dark); font-weight: bold; }
-     .btn-return:hover { opacity: 0.9; }
-        .back-link { 
-            display: block; 
-            margin-top: 20px; 
-            text-align: center; 
-            color: #7f8c8d; 
-            text-decoration: none; 
-            font-size: 0.9rem; 
-        }
-        .back-link:hover { color: #2c3e50; text-decoration: underline; }
-
-        .btn-back {
-            background: #fff;
-            border: 1px solid #ccc;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 20px;
-            display: inline-block;
-            color: #333;
-            text-decoration: none;
-            font-size: 13px;
-        }
+        .btn-back { background: #fff; border: 1px solid #ccc; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-bottom: 20px; display: inline-block; color: #333; text-decoration: none; font-size: 13px; }
         .btn-back:hover { background: #f9f9f9; }
+        .badge { background: #eee; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; color: var(--sidebar-dark); }
     </style>
 </head>
 <body>
-    
-    <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
+
+<a href="dashboard.html" class="btn-back">Back to Dashboard</a>
+
 <div class="container">
     <h2>👤 Add System User</h2>
     <form id="userForm">
-        <div class="form-group"><label>Username</label><input type="text" id="username" required></div>
-        <div class="form-group"><label>Password</label><input type="password" id="password" required></div>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="username" required placeholder="Enter username">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" required placeholder="Enter password">
+        </div>
+        <div class="form-group">
+            <label>User Type / Role</label>
+            <select id="usertype">
+                <option value="Admin">Admin</option>
+                <option value="User">User</option>
+            </select>
+        </div>
         <button type="submit" class="save-btn">Save User</button>
     </form>
+
     <div style="margin-top:40px;">
         <h3>Existing Users</h3>
         <table>
-            <thead><tr><th>ID</th><th>Username</th><th style="text-align:right;">Action</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th style="text-align:right;">Action</th>
+                </tr>
+            </thead>
             <tbody id="userTableBody"></tbody>
         </table>
     </div>
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', loadUsers);
+
     async function loadUsers() {
         const users = await window.authAPI.getAllUsers();
+        // Updated table display to show usertype
         document.getElementById('userTableBody').innerHTML = users.map(user => `
-            <tr><td>#${user.id}</td><td><strong>${user.username}</strong></td>
-            <td style="text-align:right;">${user.username === 'admin' ? '<i>System</i>' : `<button class="del-btn" onclick="deleteUser(${user.id})">Delete</button>`}</td></tr>`).join('');
+            <tr>
+                <td>#${user.id}</td>
+                <td><strong>${user.username}</strong></td>
+                <td><span class="badge">${user.usertype || 'User'}</span></td>
+                <td style="text-align:right;">
+                    ${user.username.toLowerCase() === 'admin' ? '<i>System</i>' : 
+                    `<button class="del-btn" onclick="deleteUser(${user.id})">Delete</button>`}
+                </td>
+            </tr>`).join('');
     }
+
     document.getElementById('userForm').onsubmit = async (e) => {
         e.preventDefault();
-        const res = await window.authAPI.addUser({ username: document.getElementById('username').value, password: document.getElementById('password').value });
-        if(res.success) { alert("User Added!"); document.getElementById('userForm').reset(); loadUsers(); }
+        
+        const userData = {
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            usertype: document.getElementById('usertype').value
+        };
+
+        const res = await window.authAPI.addUser(userData);
+        
+        if(res.success) { 
+            alert("User Added Successfully!"); 
+            document.getElementById('userForm').reset(); 
+            loadUsers(); 
+        } else {
+            alert("Error: " + res.error);
+        }
     };
-    async function deleteUser(id) { if(confirm("Delete this user?")) { const res = await window.authAPI.deleteUser(id); if(res.success) loadUsers(); } }
+
+    async function deleteUser(id) { 
+        if(confirm("Are you sure you want to delete this user?")) { 
+            const res = await window.authAPI.deleteUser(id); 
+            if(res.success) loadUsers(); 
+        } 
+    }
 </script>
+
 </body>
 </html>

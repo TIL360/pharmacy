@@ -2,198 +2,186 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sales Report | PHARMA 2026</title>
-    <!-- Add FontAwesome for icons if not already included -->
-    <link rel="stylesheet" href="../assets/css/all.min.css">
-
+    <title>Sales Report | PHARMA CORE</title>
     <style>
-        /* Basic styling to match your screenshot */
-        body { font-family: sans-serif; background-color: #f4f7f6; margin: 0; }
-        .report-container { max-width: 1200px; margin: 20px auto; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .report-header { background: #3498db; color: white; padding: 20px 30px; }
+        :root { --primary: #3498db; --success: #2ecc71; --bg: #f4f7f6; --dark: #2c3e50; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; }
+        .report-container { max-width: 1100px; margin: 20px auto; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+        .nav-bar { padding: 10px 25px; background: #eee; border-bottom: 1px solid #ddd; }
+        .btn-back { text-decoration: none; color: #333; font-weight: 600; font-size: 13px; border: 1px solid #ccc; padding: 6px 12px; border-radius: 4px; background: white; cursor: pointer; }
+        .report-header { background: var(--primary); color: white; padding: 25px; }
         .controls { display: flex; gap: 20px; align-items: flex-end; margin-top: 15px; }
         .input-group { display: flex; flex-direction: column; gap: 5px; }
-        .input-group label { font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
-        .input-group input { padding: 8px; border: none; border-radius: 4px; }
-        .btn-generate { background: #2ecc71; border: none; color: white; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .report-table th { background: #f8f9fa; text-align: left; padding: 12px; border-bottom: 2px solid #dee2e6; color: #666; font-size: 0.9rem; }
-        .report-table td { padding: 12px; border-bottom: 1px solid #eee; }
+        .input-group input { padding: 10px; border: none; border-radius: 4px; width: 180px; outline: none; }
+        .btn-generate { background: var(--success); border: none; color: white; padding: 10px 25px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        /* Table Styling */
+        .report-table { width: 100%; border-collapse: collapse; }
+        .report-table th { background: #f8f9fa; text-align: left; padding: 15px; border-bottom: 2px solid #dee2e6; color: #666; font-size: 12px; text-transform: uppercase; }
+        .report-table td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; }
         .text-right { text-align: right; }
-        .btn-back { text-decoration: none; color: #333; font-weight: bold; font-size: 0.9rem; border: 1px solid #ccc; padding: 5px 15px; border-radius: 4px; }
-        .back-link { 
-            display: block; 
-            margin-top: 20px; 
-            text-align: center; 
-            color: #7f8c8d; 
-            text-decoration: none; 
-            font-size: 0.9rem; 
-        }
-        .back-link:hover { color: #2c3e50; text-decoration: underline; }
+        
+        /* Clickable Row Styling */
+        .sale-row { cursor: pointer; transition: background 0.2s; }
+        .sale-row:hover { background-color: #ebf5fb; }
+        .method-tag { color: var(--primary); font-weight: bold; font-size: 12px; margin-left: 5px; }
 
-        .btn-back {
-            background: #fff;
-            border: 1px solid #ccc;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 20px;
-            display: inline-block;
-            color: #333;
-            text-decoration: none;
-            font-size: 13px;
-        }
-        .btn-back:hover { background: #f9f9f9; }
+        /* Modal Styling */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 10% auto; padding: 25px; width: 500px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .close-btn { cursor: pointer; font-size: 24px; color: #999; }
+        .detail-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .detail-table th { text-align: left; font-size: 12px; color: #888; border-bottom: 1px solid #eee; padding: 8px; }
+        .detail-table td { padding: 10px 8px; border-bottom: 1px solid #f9f9f9; font-size: 13px; }
+
+        .report-footer { padding: 25px; background: #f8f9fa; border-top: 2px solid #eee; }
+        .method-summary { display: flex; justify-content: flex-end; gap: 40px; margin-bottom: 10px; font-size: 15px; }
+        .grand-total-box { text-align: right; font-size: 24px; font-weight: 800; color: var(--success); }
     </style>
 </head>
 <body>
 
-    <div class="report-container">
-        <!-- Dashboard Navigation -->
-        <div style="padding: 10px 30px; background: #eee;">
-    <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
-        </div>
+<div class="report-container">
+    <div class="nav-bar">
+        <a href="dashboard.html" class="btn-back">← Back to Dashboard</a>
+    </div>
 
-        <div class="report-header">
-            <h2><i class="fas fa-chart-line"></i> Sales Report by User</h2>
-            <div class="controls">
-                <div class="input-group">
-                    <label>Select Date</label>
-                    <input type="date" id="report-date">
-                </div>
-                <div class="input-group">
-                    <label>Username</label>
-                    <input type="text" id="report-username" placeholder="Enter username">
-                </div>
-                <button class="btn-generate" onclick="loadReport()">
-                    <i class="fas fa-sync"></i> Generate Report
-                </button>
-            </div>
-        </div>
-
-        <div class="report-content">
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>ID (Sale / Product)</th>
-                        <th>Customer / Product Name</th>
-                        <th>Time / Qty</th>
-                        <th class="text-right">Total (Rs.) / Unit Price</th>
-                    </tr>
-                </thead>
-                <tbody id="report-tbody">
-                    <tr>
-                        <td colspan="4" style="text-align:center; padding:50px; color:#999;">
-                            Enter details and click Generate Report to see data.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="report-footer">
-            <!-- Payment Method Breakdown -->
-            <div style="display: flex; justify-content: flex-end; gap: 30px; padding: 10px; border-bottom: 1px solid #ddd; color: #555;">
-                <span>Cash: <b id="total-cash">Rs. 0.00</b></span>
-                <span>Online: <b id="total-online">Rs. 0.00</b></span>
-                <span>Bank: <b id="total-bank">Rs. 0.00</b></span>
-            </div>
-            
-            <!-- Grand Total -->
-            <div class="grand-total-display" style="text-align: right; padding: 15px; font-size: 1.4em;">
-                Grand Total: <span id="grand-total" style="color: #27ae60; font-weight: bold;">Rs. 0.00</span>
-            </div>
+    <div class="report-header">
+        <h2 style="margin:0;">📋 Sales Report Summary</h2>
+        <div class="controls">
+            <div class="input-group"><label style="font-size:11px; font-weight:bold;">DATE</label><input type="date" id="report-date"></div>
+            <div class="input-group"><label style="font-size:11px; font-weight:bold;">USERNAME</label><input type="text" id="report-username" placeholder="Admin"></div>
+            <button class="btn-generate" onclick="loadReport()">Generate Report</button>
         </div>
     </div>
 
+    <table class="report-table">
+        <thead>
+            <tr>
+                <th>ID (Sale)</th>
+                <th>Customer</th>
+                <th>Time</th>
+                <th class="text-right">Total (Rs.)</th>
+            </tr>
+        </thead>
+        <tbody id="report-tbody">
+            <tr><td colspan="4" style="text-align:center; padding:50px; color:#999;">Enter details to generate report.</td></tr>
+        </tbody>
+    </table>
+
+    <div class="report-footer">
+        <div class="method-summary">
+            <span>Cash: <b id="total-cash">0.00</b></span>
+            <span>Online: <b id="total-online">0.00</b></span>
+            <span>Bank: <b id="total-bank">0.00</b></span>
+        </div>
+        <div class="grand-total-box">Grand Total: <span id="grand-total">Rs. 0.00</span></div>
+    </div>
+</div>
+
+<!-- Modal for Bill Details -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle" style="margin:0; color:var(--dark);">Bill Details</h3>
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+        </div>
+        <table class="detail-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody id="modal-tbody"></tbody>
+        </table>
+    </div>
+</div>
+
 <script>
+    let currentSalesReport = [];
+
     async function loadReport() {
         const dateVal = document.getElementById('report-date').value;
         const userVal = document.getElementById('report-username').value;
         const tbody = document.getElementById('report-tbody');
-        
-        const grandTotalEl = document.getElementById('grand-total');
-        const cashTotalEl = document.getElementById('total-cash');
-        const onlineTotalEl = document.getElementById('total-online');
-        const bankTotalEl = document.getElementById('total-bank');
 
-        if (!dateVal || !userVal) {
-            alert("Please select both a date and a username.");
-            return;
-        }
+        if (!dateVal || !userVal) return alert("Please fill all fields.");
 
         try {
-            // Fetch updated data from backend
             const sales = await window.authAPI.getSalesReport({ date: dateVal, username: userVal });
+            currentSalesReport = sales; // Store for modal lookup
             
             let html = '';
-            let grandTotal = 0;
-            let cashTotal = 0;
-            let onlineTotal = 0;
-            let bankTotal = 0;
+            let gTotal = 0, cTotal = 0, oTotal = 0, bTotal = 0;
 
             if (!sales || sales.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:50px; color:#999;">No sales records found.</td></tr>';
-                grandTotalEl.innerText = "Rs. 0.00";
-                cashTotalEl.innerText = "Rs. 0.00";
-                onlineTotalEl.innerText = "Rs. 0.00";
-                bankTotalEl.innerText = "Rs. 0.00";
-                return;
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:50px;">No records found.</td></tr>';
+                return resetTotals();
             }
 
             sales.forEach(sale => {
-                const sTotal = Number(sale.total) || 0;
-                grandTotal += sTotal;
+                const total = Number(sale.total) || 0;
+                const method = sale.payment_method ? sale.payment_method.toLowerCase() : "";
+                
+                gTotal += total;
+                if (method === 'cash') cTotal += total;
+                else if (method === 'online') oTotal += total;
+                else bTotal += total; // Card/Bank
 
-                // Extract Payment Method and normalize to lowercase for logic
-                const method = sale.payment_method ? String(sale.payment_method).trim() : "Unknown";
-                const lowerMethod = method.toLowerCase();
+                const time = new Date(sale.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                // Corrected Conditional Logic
-                if (lowerMethod === 'cash') {
-                    cashTotal += sTotal;
-                } else if (lowerMethod === 'online') { 
-                    onlineTotal += sTotal;
-                } else if (lowerMethod === 'bank') {
-                    bankTotal += sTotal;
-                }
-
-                const timeStr = new Date(sale.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                // Construct UI Rows
                 html += `
-                    <tr class="sale-header-row" style="background: #f8f9fa; font-weight: bold; border-left: 4px solid #3498db;">
-                        <td><i class="fas fa-receipt"></i> SALE #${sale.id} <small style="color:#e67e22;">(${method})</small></td>
-                        <td>${sale.customer}</td>
-                        <td>${timeStr}</td>
-                        <td class="text-right">Rs. ${sTotal.toFixed(2)}</td>
+                    <tr class="sale-row" onclick="showDetails(${sale.id})">
+                        <td><strong>SALE #${sale.id}</strong> <span class="method-tag">(${sale.payment_method})</span></td>
+                        <td>${sale.customer || 'General Customer'}</td>
+                        <td>${time}</td>
+                        <td class="text-right"><strong>Rs. ${total.toFixed(2)}</strong></td>
                     </tr>`;
-
-                sale.items.forEach(item => {
-                    html += `
-                        <tr style="color: #7f8c8d; font-size: 0.85rem;">
-                            <td style="padding-left: 40px;">PID: ${item.id}</td>
-                            <td>${item.name}</td>
-                            <td>Qty: ${item.qty}</td>
-                            <td class="text-right">@ Rs. ${Number(item.price).toFixed(2)}</td>
-                        </tr>`;
-                });
             });
 
-            // Final UI Update
             tbody.innerHTML = html;
-            grandTotalEl.innerText = `Rs. ${grandTotal.toFixed(2)}`;
-            cashTotalEl.innerText = `Rs. ${cashTotal.toFixed(2)}`;
-            onlineTotalEl.innerText = `Rs. ${onlineTotal.toFixed(2)}`;
-            bankTotalEl.innerText = `Rs. ${bankTotal.toFixed(2)}`;
+            document.getElementById('grand-total').innerText = `Rs. ${gTotal.toFixed(2)}`;
+            document.getElementById('total-cash').innerText = `Rs. ${cTotal.toFixed(2)}`;
+            document.getElementById('total-online').innerText = `Rs. ${oTotal.toFixed(2)}`;
+            document.getElementById('total-bank').innerText = `Rs. ${bTotal.toFixed(2)}`;
+        } catch (err) { console.error(err); }
+    }
 
-        } catch (err) {
-            console.error("Report Error:", err);
-        }
+    function showDetails(saleId) {
+        const sale = currentSalesReport.find(s => s.id === saleId);
+        if (!sale) return;
+
+        document.getElementById('modalTitle').innerText = `Items for SALE #${saleId}`;
+        const modalTbody = document.getElementById('modal-tbody');
+        
+        modalTbody.innerHTML = sale.items.map(item => `
+            <tr>
+                <td>${item.name}</td>
+                <td>${item.qty}</td>
+                <td>${Number(item.price).toFixed(2)}</td>
+                <td class="text-right">${(item.qty * item.price).toFixed(2)}</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('detailsModal').style.display = "block";
+    }
+
+    function closeModal() { document.getElementById('detailsModal').style.display = "none"; }
+    
+    // Close modal if user clicks outside of it
+    window.onclick = (event) => {
+        if (event.target == document.getElementById('detailsModal')) closeModal();
+    }
+
+    function resetTotals() {
+        ['grand-total', 'total-cash', 'total-online', 'total-bank'].forEach(id => {
+            document.getElementById(id).innerText = (id === 'grand-total' ? 'Rs. 0.00' : '0.00');
+        });
     }
 </script>
-
-
-
 </body>
 </html>

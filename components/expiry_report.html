@@ -4,106 +4,163 @@
     <meta charset="UTF-8">
     <title>Near Expiry Report | POS CORE</title>
     <style>
-        :root {
-            --sidebar-dark: #2c3e50;
-            --accent-orange: #e67e22;
-            --bg-page: #f4f6f9;
-        }
+        :root { --sidebar-dark: #2c3e50; --accent-orange: #e67e22; --bg-page: #f4f6f9; }
         body { font-family: 'Segoe UI', sans-serif; padding: 30px; background: var(--bg-page); margin: 0; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .header-text h2 { color: var(--sidebar-dark); margin: 0; text-transform: uppercase; }
         .header-text p { margin: 5px 0 0 0; color: #666; font-size: 14px; }
         
+        /* Search and Layout Controls */
+        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 20px; }
+        .search-box { 
+            flex: 1; padding: 12px 15px; border: 1.5px solid #dee2e6; 
+            border-radius: 6px; font-size: 15px; outline: none;
+        }
+        .search-box:focus { border-color: var(--accent-orange); }
         .button-group { display: flex; gap: 10px; }
-        
+
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         th { background: var(--sidebar-dark); color: white; padding: 15px; text-align: left; font-size: 14px; }
         td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
         tr:hover { background: #f9f9f9; }
 
         .expiry-tag { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
-        
-        .btn { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: 0.2s; text-decoration: none; display: inline-block; }
         .btn-back { background: #95a5a6; color: white; }
         .btn-print { background: var(--accent-orange); color: white; }
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
 
-        /* --- PRINT STYLES (A4) --- */
+        /* Pagination Styling */
+        .pagination-nav { margin-top: 20px; display: flex; justify-content: center; gap: 10px; align-items: center; }
+        .btn-page { background: white; border: 1px solid #ccc; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-page:disabled { cursor: not-allowed; opacity: 0.5; }
+
         @media print {
             body { background: white; padding: 0; }
-            .button-group { display: none; } /* Hide buttons when printing */
+            .button-group, .search-box, .pagination-nav { display: none !important; }
             .header { margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-            table { box-shadow: none; border: 1px solid #ccc; }
+            table { box-shadow: none; border: 1px solid #ccc; width: 100%; }
             th { background: #f2f2f2 !important; color: black !important; border: 1px solid #ccc; }
             td { border: 1px solid #ccc; }
-            .expiry-tag { border: none; background: none; padding: 0; color: black; text-decoration: underline; }
-            @page { size: A4; margin: 2cm; }
+            @page { size: A4; margin: 1cm; }
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="header-text">
-            <h2>⚠️ Near Expiry Inventory Report</h2>
-            <p id="genDate"></p>
-        </div>
-        <div class="button-group">
-            <button class="btn btn-back" onclick="window.location.href='dashboard.html'">Back</button>
-            <button class="btn btn-print" onclick="window.print()">Print / Save</button>
-        </div>
+<div class="header">
+    <div class="header-text">
+        <h2>⚠️ Near Expiry Inventory Report</h2>
+        <p id="genDate"></p>
     </div>
+    <div class="button-group">
+        <a href="dashboard.html" class="btn btn-back">Back</a>
+        <button class="btn btn-print" onclick="window.print()">Print / Save PDF</button>
+    </div>
+</div>
 
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 50px;">Sr. No</th>
-                <th>Batch No</th>
-                <th>Product Name</th>
-                <th>Category</th>
-                <th>Qty</th>
-                <th>Expiry Date</th>
-                <th class="no-print">Status</th>
-            </tr>
-        </thead>
-        <tbody id="expiryBody">
-            <!-- Data will be injected here -->
-        </tbody>
-    </table>
+<div class="controls-row">
+    <input type="text" id="searchInput" class="search-box" placeholder="Search by Product Name or Batch No..." onkeyup="filterData()">
+</div>
 
-    <script>
-        // Set generation date
-        document.getElementById('genDate').innerText = "Report Generated: " + new Date().toLocaleString();
+<table>
+    <thead>
+        <tr>
+            <th style="width: 50px;">Sr. No</th>
+            <th>Batch No</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Qty</th>
+            <th>Expiry Date</th>
+            <th class="no-print">Status</th>
+        </tr>
+    </thead>
+    <tbody id="expiryBody"></tbody>
+</table>
 
-        async function loadExpiryData() {
-            const tbody = document.getElementById('expiryBody');
-            try {
-                const items = await window.authAPI.getNearExpiryReport();
-                
-                if (items.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:40px;">✅ No items expiring within the next 30 days.</td></tr>`;
-                    return;
-                }
+<div id="paginationNav" class="pagination-nav"></div>
 
-                tbody.innerHTML = items.map((item, index) => `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${item.batch_no}</td>
-                        <td style="font-weight: bold;">${item.name}</td>
-                        <td>${item.category || 'General'}</td>
-                        <td>${item.quantity}</td>
-                        <td style="color: #e74c3c; font-weight:bold;">${item.expiry_date}</td>
-                        <td><span class="expiry-tag">Expiring Soon</span></td>
-                    </tr>
-                `).join('');
-            } catch (err) {
-                console.error(err);
-                tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Failed to fetch data from database.</td></tr>`;
-            }
+<script>
+    document.getElementById('genDate').innerText = "Report Generated: " + new Date().toLocaleString();
+
+    let allItems = [];
+    let filteredItems = [];
+    let currentPage = 1;
+    const recordsPerPage = 14;
+
+    async function loadExpiryData() {
+        try {
+            allItems = await window.authAPI.getNearExpiryReport();
+            filteredItems = [...allItems];
+            renderTable();
+        } catch (err) {
+            console.error(err);
+            document.getElementById('expiryBody').innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Failed to fetch data.</td></tr>`;
+        }
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('expiryBody');
+        const startIndex = (currentPage - 1) * recordsPerPage;
+        const endIndex = startIndex + recordsPerPage;
+        const pageData = filteredItems.slice(startIndex, endIndex);
+
+        if (pageData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:40px;">No matching items found.</td></tr>`;
+            renderPagination(0);
+            return;
         }
 
-        window.onload = loadExpiryData;
-    </script>
+        tbody.innerHTML = pageData.map((item, index) => `
+            <tr>
+                <td>${startIndex + index + 1}</td>
+                <td>${item.batch_no}</td>
+                <td style="font-weight: bold;">${item.name}</td>
+                <td>${item.category || 'General'}</td>
+                <td>${item.quantity}</td>
+                <td style="color: #e74c3c; font-weight:bold;">${item.expiry_date}</td>
+                <td><span class="expiry-tag">Expiring Soon</span></td>
+            </tr>
+        `).join('');
+
+        renderPagination(filteredItems.length);
+    }
+
+    function filterData() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        currentPage = 1;
+
+        if (!query) {
+            filteredItems = [...allItems];
+        } else {
+            filteredItems = allItems.filter(item => 
+                item.name.toLowerCase().includes(query) || 
+                item.batch_no.toLowerCase().includes(query)
+            );
+        }
+        renderTable();
+    }
+
+    function renderPagination(total) {
+        const nav = document.getElementById('paginationNav');
+        const totalPages = Math.ceil(total / recordsPerPage);
+
+        nav.innerHTML = `
+            <button class="btn-page" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(-1)">Previous</button>
+            <span>Page <strong>${currentPage}</strong> of ${totalPages || 1}</span>
+            <button class="btn-page" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} onclick="changePage(1)">Next</button>
+        `;
+    }
+
+    function changePage(step) {
+        currentPage += step;
+        renderTable();
+        window.scrollTo(0, 0);
+    }
+
+    window.onload = loadExpiryData;
+</script>
+
 </body>
 </html>

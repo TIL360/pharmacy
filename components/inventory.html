@@ -4,256 +4,177 @@
     <meta charset="UTF-8">
     <title>Inventory Management | POS CORE</title>
     <style>
-        :root {
-            --bg-page: #f4f6f9;         /* Light grey background */
-            --sidebar-dark: #2c3e50;    /* Dark navy from sidebar */
-            --accent-orange: #e67e22;   /* Orange from dashboard */
-            --text-main: #333;
-            --text-white: #ffffff;
-            --border-light: #dee2e6;
-        }
-
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background-color: var(--bg-page); 
-            margin: 0; 
-            padding: 25px; 
-            color: var(--text-main);
-        }
-
-        .container { 
-            background: white; 
-            padding: 25px; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
-            max-width: 1250px;
-            margin: auto;
-        }
-
-        /* Navigation & Search */
+        :root { --bg-page: #f4f6f9; --sidebar-dark: #2c3e50; --accent-orange: #e67e22; --border-light: #dee2e6; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-page); margin: 0; padding: 25px; }
+        .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 1250px; margin: auto; }
+        
+        /* Header & Filters */
         .header-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .back-link { text-decoration: none; color: var(--sidebar-dark); font-weight: 600; font-size: 14px; }
-        .back-link:hover { color: var(--accent-orange); }
-
-        .search-container { margin-bottom: 20px; position: relative; }
-        .search-box { 
-            width: 100%; 
-            padding: 12px 15px 12px 40px; 
-            border: 1.5px solid var(--border-light); 
-            border-radius: 6px; 
-            font-size: 15px;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
+        .controls-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .search-box { flex: 1; padding: 12px; border: 1.5px solid var(--border-light); border-radius: 6px; font-size: 15px; }
+        
+        /* Toggle Button Styling */
+        .btn-toggle { 
+            padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; 
+            font-weight: bold; transition: 0.3s; background: #95a5a6; color: white;
         }
-        .search-box:focus { outline: none; border-color: var(--accent-orange); }
-        .search-icon { position: absolute; left: 15px; top: 14px; color: #999; }
+        .btn-toggle.active-mode { background: #27ae60; }
+        .btn-toggle.inactive-mode { background: #e74c3c; }
 
         /* Table Styling */
-        .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
-        th { 
-            background-color: var(--sidebar-dark); 
-            color: var(--text-white); 
-            padding: 12px 15px; 
-            text-align: left; 
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; }
-        tr:hover { background-color: #f8f9fa; }
-
-        .price { font-weight: 600; color: #27ae60; }
-        .low-stock { color: #e74c3c; font-weight: bold; background: #fff5f5; border-radius: 4px; padding: 2px 5px; }
-
-        /* Buttons */
-        .btn-edit { 
-            background: white; border: 1.5px solid var(--accent-orange); color: var(--accent-orange); 
-            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;
-            transition: 0.2s;
-        }
-        .btn-edit:hover { background: var(--accent-orange); color: white; }
-
-        /* --- MODAL STYLING (Matched to Login Page) --- */
-        .modal { 
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0; 
-            width: 100%; height: 100%; background: rgba(0,0,0,0.6); 
-            align-items: center; justify-content: center; 
-        }
-        .modal-content { 
-            background: var(--sidebar-dark); color: white; padding: 30px; 
-            border-radius: 8px; width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
-            position: relative; text-align: left;
-        }
-        .modal-content h3 { margin-top: 0; color: var(--accent-orange); border-bottom: 1px solid #455a64; padding-bottom: 10px; }
-        .close-btn { position: absolute; right: 20px; top: 15px; cursor: pointer; font-size: 24px; color: #bdc3c7; }
-
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
-        .form-group { flex: 1; margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 11px; color: #bdc3c7; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
-        .form-group input { 
-            width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #455a64; 
-            background: #34495e; color: white; box-sizing: border-box; font-size: 14px;
-        }
-        .form-group input:focus { outline: none; border-color: var(--accent-orange); }
-
-        .btn-save { 
-            background: var(--accent-orange); color: white; border: none; padding: 14px; 
-            border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; 
-            margin-top: 10px; text-transform: uppercase; letter-spacing: 1px;
-        }
-        .btn-save:hover { opacity: 0.9; }
-           .back-link { 
-            display: block; 
-            margin-top: 20px; 
-            text-align: center; 
-            color: #7f8c8d; 
-            text-decoration: none; 
-            font-size: 0.9rem; 
-        }
-        .back-link:hover { color: #2c3e50; text-decoration: underline; }
-
-        .btn-back {
-            background: #fff;
-            border: 1px solid #ccc;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 20px;
-            display: inline-block;
-            color: #333;
-            text-decoration: none;
-            font-size: 13px;
-        }
-        .btn-back:hover { background: #f9f9f9; }
+        th { background-color: var(--sidebar-dark); color: white; padding: 12px; text-align: left; font-size: 13px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-active { background: #d4edda; color: #155724; }
+        .badge-inactive { background: #f8d7da; color: #721c24; }
+        
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
+        .modal-content { background: var(--sidebar-dark); color: white; padding: 30px; border-radius: 8px; width: 450px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 11px; color: #bdc3c7; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #455a64; background: #34495e; color: white; }
+        .btn-save { background: var(--accent-orange); color: white; border: none; padding: 14px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <a href="dashboard.html" class="btn-back">Back to Dashboard</a>
+
 <div class="container">
-    
     <div class="header-nav">
         <h2 style="margin: 0; color: var(--sidebar-dark);">📦 Inventory Management</h2>
+        <button class="btn-toggle active-mode" style="background-color: #e7ad0b !important;" onclick="window.location.href='dashboard.html'">
+            Dashboard
+        </button>
+        <button id="statusToggleBtn" class="btn-toggle active-mode" onclick="toggleStatusFilter()">
+            Showing: Active Medicines
+        </button>
     </div>
 
-    <!-- Search Bar -->
-    <div class="search-container">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" class="search-box" placeholder="Search by name, category or batch..." onkeyup="filterTable()">
+    <div class="controls-row">
+        <input type="text" id="searchInput" class="search-box" placeholder="Search by name, category or ID..." onkeyup="filterTable()">
     </div>
 
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Product Name</th>
-                    <th>Category</th>
-                    <th>Cost</th>
-                    <th>Price</th>
-                    <th>Stock</th>
-                    <th style="text-align: center;">Action</th>
-                </tr>
-            </thead>
-            <tbody id="inventoryBody">
-                <!-- Data loaded via JS -->
-            </tbody>
-        </table>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th style="text-align: center;">Action</th>
+            </tr>
+        </thead>
+        <tbody id="inventoryBody"></tbody>
+    </table>
+    <div id="paginationNav" style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;"></div>
 </div>
 
 <!-- Edit Modal -->
 <div id="editModal" class="modal">
     <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-        <h3>Update Product Details</h3>
-        
+        <h3>Update Product</h3>
         <input type="hidden" id="editId">
-        
+        <div class="form-group"><label>Product Name</label><input type="text" id="editName"></div>
+        <div class="form-group"><label>Category</label><input type="text" id="editCategory"></div>
+        <div style="display:flex; gap:10px;">
+            <div class="form-group"><label>Cost</label><input type="number" id="editCost"></div>
+            <div class="form-group"><label>Price</label><input type="number" id="editPrice"></div>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <div class="form-group"><label>Stock</label><input type="number" id="editStock"></div>
+            <div class="form-group"><label>Min Level</label><input type="number" id="editMinLevel"></div>
+        </div>
         <div class="form-group">
-            <label>Product Name</label>
-            <input type="text" id="editName">
+            <label>Status</label>
+            <select id="editStatus">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </select>
         </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>Category</label>
-                <input type="text" id="editCategory">
-            </div>
-            
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>Cost Price (Rs)</label>
-                <input type="number" id="editCost" step="0.01">
-            </div>
-            <div class="form-group">
-                <label>Sale Price (Rs)</label>
-                <input type="number" id="editPrice" step="0.01">
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>Stock Qty</label>
-                <input type="number" id="editStock">
-            </div>
-            <div class="form-group">
-                <label>Min Stock Level</label>
-                <input type="number" id="editMinLevel">
-            </div>
-        </div>
-
-
         <button class="btn-save" onclick="saveProduct()">Update Inventory</button>
+        <button onclick="closeModal()" style="background:none; border:none; color:white; width:100%; margin-top:10px; cursor:pointer;">Cancel</button>
     </div>
 </div>
 
 <script>
     let inventoryData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    let currentStatusView = 'Active'; 
+    const recordsPerPage = 12;
 
-    // 1. Load Data
     async function loadInventory() {
-        const tbody = document.getElementById('inventoryBody');
-        try {
-            inventoryData = await window.authAPI.getAllProducts();
-            
-            tbody.innerHTML = inventoryData.map(p => `
-                <tr>
-                    <td>#${p.id}</td>
-                    <td style="font-weight:600;">${p.name}</td>
-                    <td>${p.category || 'N/A'}</td>
-                    <td class="price">Rs.${p.cost_price.toFixed(2)}</td>
-                    <td class="price">Rs.${p.price.toFixed(2)}</td>
-                    <td><span class="${p.stock <= p.min_stock_level ? 'low-stock' : ''}">${p.stock}</span></td>
-                    <td style="text-align: center;">
-                        <button class="btn-edit" onclick="openModal(${p.id})">✏️ Edit</button>
-                    </td>
-                </tr>
-            `).join('');
-        } catch (err) {
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red;">Error accessing database.</td></tr>`;
-        }
+        inventoryData = await window.authAPI.getAllProducts();
+        applyFilters();
     }
 
-    // 2. Search Function
-    function filterTable() {
-        const query = document.getElementById("searchInput").value.toLowerCase();
-        const rows = document.getElementById("inventoryBody").getElementsByTagName("tr");
+    function toggleStatusFilter() {
+        currentStatusView = (currentStatusView === 'Active') ? 'Inactive' : 'Active';
+        const btn = document.getElementById('statusToggleBtn');
+        btn.innerText = `Showing: ${currentStatusView} Medicines`;
+        btn.className = `btn-toggle ${currentStatusView === 'Active' ? 'active-mode' : 'inactive-mode'}`;
+        currentPage = 1;
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
         
-        for (let row of rows) {
-            const content = row.textContent.toLowerCase();
-            row.style.display = content.includes(query) ? "" : "none";
+        // 1. Filter by Status first
+        let data = inventoryData.filter(p => p.status === currentStatusView);
+
+        // 2. Filter by Search Query
+        if (query) {
+            data = data.filter(p => 
+                p.name.toLowerCase().includes(query) || 
+                p.category?.toLowerCase().includes(query) || 
+                p.id.toString() === query
+            );
         }
+
+        filteredData = data;
+        renderTable();
     }
 
-    // 3. Modal Controls
+    function renderTable() {
+        const tbody = document.getElementById('inventoryBody');
+        const startIndex = (currentPage - 1) * recordsPerPage;
+        const pageData = filteredData.slice(startIndex, startIndex + recordsPerPage);
+
+        tbody.innerHTML = pageData.map(p => `
+            <tr>
+                <td>#${p.id}</td>
+                <td style="font-weight:600;">${p.name}</td>
+                <td>${p.category || 'N/A'}</td>
+                <td style="color: #27ae60; font-weight:bold;">Rs.${p.price.toFixed(2)}</td>
+                <td><span class="${p.stock <= p.min_stock_level ? 'low-stock' : ''}">${p.stock}</span></td>
+                <td><span class="status-badge ${p.status === 'Active' ? 'badge-active' : 'badge-inactive'}">${p.status}</span></td>
+                <td style="text-align: center;"><button class="btn-edit" onclick="openModal(${p.id})">✏️ Edit</button></td>
+            </tr>
+        `).join('');
+
+        renderPagination(filteredData.length);
+    }
+
+    function renderPagination(total) {
+        const nav = document.getElementById('paginationNav');
+        const totalPages = Math.ceil(total / recordsPerPage);
+        nav.innerHTML = `
+            <button class="btn-toggle" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(-1)">Prev</button>
+            <span style="align-self:center">Page ${currentPage} of ${totalPages || 1}</span>
+            <button class="btn-toggle" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} onclick="changePage(1)">Next</button>
+        `;
+    }
+
+    function changePage(step) { currentPage += step; renderTable(); window.scrollTo(0,0); }
+    function filterTable() { currentPage = 1; applyFilters(); }
+
     function openModal(id) {
         const p = inventoryData.find(item => item.id === id);
-        if (!p) return;
-
         document.getElementById('editId').value = p.id;
         document.getElementById('editName').value = p.name;
         document.getElementById('editCategory').value = p.category;
@@ -261,15 +182,12 @@
         document.getElementById('editPrice').value = p.price;
         document.getElementById('editStock').value = p.stock;
         document.getElementById('editMinLevel').value = p.min_stock_level;
-
+        document.getElementById('editStatus').value = p.status || 'Active';
         document.getElementById('editModal').style.display = 'flex';
     }
 
-    function closeModal() {
-        document.getElementById('editModal').style.display = 'none';
-    }
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
 
-    // 4. Save Function
     async function saveProduct() {
         const data = {
             id: parseInt(document.getElementById('editId').value),
@@ -279,21 +197,13 @@
             price: parseFloat(document.getElementById('editPrice').value),
             stock: parseInt(document.getElementById('editStock').value),
             min_stock_level: parseInt(document.getElementById('editMinLevel').value),
+            status: document.getElementById('editStatus').value
         };
-
-        const response = await window.authAPI.updateProduct(data);
-        if (response.success) {
-            alert("✅ Inventory Updated!");
-            closeModal();
-            loadInventory();
-        } else {
-            alert("❌ Error: " + response.error);
-        }
+        const res = await window.authAPI.updateProduct(data);
+        if (res.success) { closeModal(); loadInventory(); }
     }
 
-    // Initialize
     window.onload = loadInventory;
 </script>
-
 </body>
 </html>
