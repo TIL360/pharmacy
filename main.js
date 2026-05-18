@@ -1,15 +1,17 @@
-//this line removes yellow war warning
+// POS main.js - COMPLETE VERSION WITH DATE TAMPER PROTECTION
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 
-const { app, BrowserWindow, Menu, globalShortcut, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Menu, globalShortcut, ipcMain, dialog, shell, protocol } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { shell } = require('electron'); // Add this at the top
 
-// 1. EXPIRY CONFIGURATION
-const EXPIRY_DATE = new Date(2026, 4, 30); // Dec 31, 2025 (Format: Year, Month-1, Day)
+// --- 1. CONFIGURATION & PATHS ---
+// Change this line to target June 30 exactly
+const EXPIRY_DATE = new Date(2026, 5, 31); 
+const userDataPath = app.getPath('userData');
+const configPath = path.join(userDataPath, 'config.json'); 
 
-// 2. IMPORT FROM DATABASE.JS
+// --- 2. DATABASE IMPORTS ---
 const { 
     db, 
     checkUser, 
@@ -22,7 +24,7 @@ const {
     addCategory, 
     getSaleDetails, 
     getCategories, 
-    getBillDetails, // <--- MAKE SURE THIS IS HERE
+    getBillDetails, 
     processCustomerReturn, 
     processSupplierReturn,
     searchBatchesByName,
@@ -30,34 +32,61 @@ const {
     deleteCategory,
     updateCategory,
     getPurchases,
-    updatePurchase, getReturnHistoryBySale,
+    updatePurchase, 
+    getReturnHistoryBySale,
     changeUserPassword,
     getReturnHistory,
     getNearExpiryReport
 } = require('./database.js');
- 
 
 let win;
-// Menu.setApplicationMenu(null); 
 
+Menu.setApplicationMenu(null); 
+
+// --- 3. CORE WINDOW LOGIC ---
 function createWindow() {
-    // EXPIRY CHECK
+    // OFFLINE PROTECTION & DATE TAMPERING LOGIC
     const today = new Date();
-    if (today > EXPIRY_DATE) {
+    let lastRunDate;
+
+    if (fs.existsSync(configPath)) {
+        try {
+            const config = JSON.parse(fs.readFileSync(configPath));
+            lastRunDate = new Date(config.lastRun);
+        } catch (e) {
+            lastRunDate = today;
+        }
+    } else {
+        lastRunDate = today;
+    }
+
+    // Check A: Clock Tampering (Clock set back)
+    if (today < lastRunDate) {
         dialog.showErrorBox(
-            "System Lock", 
-            "Your license has expired. Please contact the administrator to continue using this software. Contact: 0322-5366745, E-mail: itsmeaamer85@gmail.com"
+            "Time Tamper Detected", 
+            "Your system clock is incorrect or has been set back. Please correct your time settings to continue."
         );
         app.quit();
         return;
     }
-    
+
+    // Check B: License Expiry
+    if (today > EXPIRY_DATE) {
+        dialog.showErrorBox(
+            "System Lock", 
+            "Your license has expired. Please contact the administrator to continue.\nContact: 0322-5366745\nE-mail: itsmeaamer85@gmail.com"
+        );
+        app.quit();
+        return;
+    }
+
+    // Update the "Last Run" date to today
+    fs.writeFileSync(configPath, JSON.stringify({ lastRun: today.toISOString() }));
 
     win = new BrowserWindow({
-        
         width: 1100,
         height: 850,
-        title: "My Application",
+        title: "POS System",
         titleBarStyle: "default",
         backgroundColor: "#fdf0d5",
         webPreferences: {
@@ -67,59 +96,48 @@ function createWindow() {
         }
     });
 
-    // FIX: Using path.join for reliable file loading
     win.loadFile(path.join(__dirname, 'components', 'login.html'));
     win.on('closed', () => { win = null; });
 }
-//licence status
+
+// --- 4. IPC HANDLERS (ALL FUNCTIONS) ---
+
+// License & Navigation
 ipcMain.handle('get-license-status', () => {
     const today = new Date();
     const diffTime = EXPIRY_DATE - today;
-    
     if (diffTime <= 0) return "Expired";
-
     const totalDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const months = Math.floor(totalDays / 30);
     const days = totalDays % 30;
-
     return `${months} Months, ${days} Days Remaining`;
 });
 
+ipcMain.on('change-page', (event, fileName) => {
+    if (win) win.loadFile(path.join(__dirname, 'components', fileName));
+});
 
-// Add a function to create sales windows
+// Sales Windows
 function createSalesWindow(page, user) {
-  const salesWin = new BrowserWindow({
-    width: 1000,
-    height: 800,
-    backgroundColor: "#fdf0d5",
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false
-    }
-  });
-
-  // Construct the path with the user as a query parameter
-  const filePath = path.join(__dirname, 'components', page);
-  salesWin.loadURL(`file://${filePath}?user=${encodeURIComponent(user)}`);
+    const salesWin = new BrowserWindow({
+        width: 1000,
+        height: 800,
+        backgroundColor: "#fdf0d5",
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false
+        }
+    });
+    const filePath = path.join(__dirname, 'components', page);
+    salesWin.loadURL(`file://${filePath}?user=${encodeURIComponent(user)}`);
 }
 
-
-// Add an IPC listener to trigger these windows
 ipcMain.on('open-sales-window', (event, data) => {
-  // data will be an object like { page: 'sale.html', user: 'Admin' }
-  createSalesWindow(data.page, data.user);
-});
-// --- IPC HANDLERS ---
-
-// Navigation Helper (Use this to change pages from your frontend)
-ipcMain.on('change-page', (event, fileName) => {
-    if (win) {
-        win.loadFile(path.join(__dirname, 'components', fileName));
-    }
+    createSalesWindow(data.page, data.user);
 });
 
-// Auth
+// Auth & User Management
 ipcMain.handle('login-attempt', async (event, credentials) => {
     try {
         const user = checkUser(credentials.username, credentials.password);
@@ -132,11 +150,29 @@ ipcMain.handle('add-user', async (event, userData) => {
     catch (err) { return { success: false, error: err.message }; }
 });
 
+ipcMain.handle('get-all-users', async () => {
+    try {
+        const { getAllUsers } = require('./database.js'); 
+        return getAllUsers();
+    } catch (err) { return []; }
+});
+
+ipcMain.handle('delete-user', async (event, id) => {
+    try {
+        db.prepare('DELETE FROM users WHERE id = ?').run(id);
+        return { success: true };
+    } catch (err) { return { success: false, error: err.message }; }
+});
+
+ipcMain.handle('change-password', async (event, currentP, newP) => {
+    return changeUserPassword(currentP, newP);
+});
+
 ipcMain.on('logout-trigger', () => { 
     if (win) win.loadFile(path.join(__dirname, 'components', 'login.html')); 
 });
 
-// Inventory
+// Inventory, Products & Categories
 ipcMain.handle('add-item', async (event, itemData) => {
     try {
         const info = addProduct(itemData);
@@ -144,101 +180,114 @@ ipcMain.handle('add-item', async (event, itemData) => {
     } catch (err) { return { success: false, error: err.message }; }
 });
 
-ipcMain.handle('get-products', async () => {
-    try { return db.prepare('SELECT id, name FROM products').all(); } 
-    catch (err) { return []; }
+ipcMain.handle('update-product', async (event, data) => {
+    return updateProduct(data);
 });
 
 ipcMain.handle('get-all-inventory', async () => {
-    try { return getAllProducts(); } 
-    catch (err) { return []; }
+    try { return getAllProducts(); } catch (err) { return []; }
 });
 
-ipcMain.handle('save-purchase', async (event, purchaseData) => {
-    try { addPurchase(purchaseData); return { success: true }; } 
-    catch (err) { return { success: false, error: err.message }; }
+ipcMain.handle('get-inventory', async () => {
+    const sql = `SELECT id, name, batch_no, selling_price, quantity, min_stock_level, category FROM products`;
+    return db.prepare(sql).all();
 });
-
-
-ipcMain.handle('process-sale-manual', async (event, saleData) => {
-    try {
-        // Call the function we just created in database.js
-        return processSaleManual(saleData); 
-    } catch (err) {
-        console.error("Sale Process Error:", err);
-        return { success: false, error: err.message };
-    }
-});
-//edit and update category
-
-ipcMain.handle('delete-category', async (event, id) => {
-    try { return { success: true, result: deleteCategory(id) }; } 
-    catch (e) { return { success: false, error: e.message }; }
-});
-
-ipcMain.handle('update-category', async (event, { id, name }) => {
-    try { return { success: true, result: updateCategory(id, name) }; } 
-    catch (e) { return { success: false, error: e.message }; }
-});
-
-//code ends update edit vategory
-
 
 ipcMain.handle('get-product-by-barcode', (event, barcode) => {
     try { return getProductByBarcode(barcode); } catch (err) { return null; }
 });
 
+ipcMain.handle('search-batches', async (event, query) => {
+    try { return searchBatchesByName(query); } catch (err) { return []; }
+});
+
 ipcMain.handle('add-category', async (event, categoryName) => {
-    try { return addCategory(categoryName); } 
-    catch (error) { return { success: false, error: error.message }; }
+    try { return addCategory(categoryName); } catch (error) { return { success: false, error: error.message }; }
 });
 
 ipcMain.handle('get-categories', async () => {
     try { return getCategories(); } catch (error) { return []; }
 });
 
+ipcMain.handle('update-category', async (event, { id, name }) => {
+    try { return { success: true, result: updateCategory(id, name) }; } catch (e) { return { success: false, error: e.message }; }
+});
+
+ipcMain.handle('delete-category', async (event, id) => {
+    try { return { success: true, result: deleteCategory(id) }; } catch (e) { return { success: false, error: e.message }; }
+});
+
+// Sales & Bills
+ipcMain.handle('process-sale-manual', async (event, saleData) => {
+    try { return processSaleManual(saleData); } catch (err) { return { success: false, error: err.message }; }
+});
+
+ipcMain.handle('get-sale-details', async (event, saleId) => {
+    try { return getSaleDetails(saleId); } catch (err) { return []; }
+});
+
+ipcMain.handle('get-bill-details', async (event, billId) => {
+    try {
+        const { getBillDetails } = require('./database.js');
+        return getBillDetails(billId); 
+    } catch (error) { return { success: false, message: error.message }; }
+});
+
+// Purchases
+ipcMain.handle('save-purchase', async (event, purchaseData) => {
+    try { addPurchase(purchaseData); return { success: true }; } catch (err) { return { success: false, error: err.message }; }
+});
+
+ipcMain.handle('get-purchases', async () => {
+    try { return getPurchases(); } catch (error) { return []; }
+});
+
+ipcMain.handle('update-purchase', async (event, data) => {
+    try { return updatePurchase(data); } catch (error) { return { success: false, error: error.message }; }
+});
+
+// Returns History
+ipcMain.handle('process-customer-return', async (event, data) => {
+    return processCustomerReturn(data);
+});
+
+ipcMain.handle('process-supplier-return', async (event, data) => {
+    return processSupplierReturn(data); 
+});
+
+ipcMain.handle('get-return-history', async (event, saleId) => {
+    try { return getReturnHistory(saleId); } catch (error) { throw error; }
+});
+
+ipcMain.handle('get-return-history-by-sale', async (event, saleId) => {
+    return getReturnHistoryBySale(saleId);
+});
+
+// Reports & Stats
+ipcMain.handle('get-dashboard-stats', async () => {
+    const { getDashboardStats } = require('./database.js'); 
+    return getDashboardStats();
+});
+
 ipcMain.handle('get-sales-report', async (event, { date, username }) => {
     try {
         const { getSalesReportWithDetails } = require('./database.js');
         return getSalesReportWithDetails(date, username);
-    } catch (err) {
-        console.error("Report Error:", err);
-        return [];
-    }
+    } catch (err) { return []; }
 });
 
-// User Management
-ipcMain.handle('get-all-users', async () => {
+ipcMain.handle('get-near-expiry-report', async () => {
+    try { return getNearExpiryReport(); } catch (err) { return []; }
+});
+
+ipcMain.handle('get-low-stock-report', async () => {
     try {
-        const { getAllUsers } = require('./database.js'); 
-        return getAllUsers();
-    } catch (err) {
-        console.error("Error fetching users:", err);
-        return [];
-    }
-});
-// Update your search handler to use the 'db' object correctly
-
-ipcMain.handle('search-batches', async (event, query) => {
-    try {
-        // This calls the function we wrote in the previous step in Database.js
-        return searchBatchesByName(query);
-    } catch (err) {
-        console.error("Search Error in Main:", err);
-        return [];
-    }
+        const sql = `SELECT name, stock, stock, min_stock_level FROM products WHERE stock < (min_stock_level / 2.0)`;
+        return db.prepare(sql).all();
+    } catch (err) { return []; }
 });
 
-ipcMain.handle('delete-user', async (event, id) => {
-    try {
-        db.prepare('DELETE FROM users WHERE id = ?').run(id);
-        return { success: true };
-    } catch (err) {
-        return { success: false, error: err.message };
-    }
-});
-
-// UI Fixes
+// UI Fixes & Utilities
 ipcMain.on('fix-focus', (event) => {
     const focusedWindow = BrowserWindow.fromWebContents(event.sender);
     if (focusedWindow) {
@@ -253,166 +302,13 @@ ipcMain.on('fix-focus', (event) => {
     }
 });
 
-// Product Updates
-ipcMain.handle('update-price', async (event, { id, price }) => {
-    try {
-        const stmt = db.prepare('UPDATE products SET price = ? WHERE id = ?');
-        stmt.run(price, id);
-        return { success: true };
-    } catch (err) {
-        console.error("Price Update Error:", err);
-        return { success: false, error: err.message };
-    }
-});
-
-// Low Stock Reporting
-
-// Add this in main.js along with your other ipcMain.handle functions
-ipcMain.handle('get-dashboard-stats', async () => {
-    const { getDashboardStats } = require('./database.js'); // Ensure it's imported
-    return getDashboardStats();
-});
-
-// In main.js
-ipcMain.handle('get-inventory', async () => {
-    // Make sure 'selling_price' and 'quantity' are explicitly in the SELECT
-    const sql = `SELECT id, name, batch_no, selling_price, quantity, min_stock_level, category FROM products`;
-    return db.prepare(sql).all();
-});
-
-//low stock report
-
-ipcMain.handle('get-low-stock-report', async () => {
-    try {
-        // We need 'barcode' and 'min_stock_level' specifically
-       const sql = `
-    SELECT name, stock, stock, min_stock_level
-    FROM products
-    WHERE stock < (min_stock_level / 2.0)
-`;
-        return db.prepare(sql).all();
-    } catch (err) {
-        console.error("Database Error:", err);
-        return [];
-    }
-});
-//purchases
-ipcMain.handle('get-purchases', async () => {
-    try {
-        return getPurchases(); // Calls the function in your database.js
-    } catch (error) {
-        console.error("Failed to fetch purchases:", error);
-        return [];
-    }
-});
-
-ipcMain.handle('update-purchase', async (event, data) => {
-    try {
-        return updatePurchase(data); // Calls the function in your database.js
-    } catch (error) {
-        console.error("Failed to update purchase:", error);
-        return { success: false, error: error.message };
-    }
-});
-//purchases ends
-
-// --- RETURNS HANDLERS ---
-
-// Customer Return (Increases Stock)
-ipcMain.handle('process-customer-return', async (event, data) => {
-    return processCustomerReturn(data);
-});
-ipcMain.handle('get-sale-details', async (event, saleId) => {
-    try {
-        const details = getSaleDetails(saleId);
-        return details;
-    } catch (err) {
-        console.error("Error fetching bill details:", err);
-        return [];
-    }
-});
-
-
-
-
-// Supplier Return (Decreases Stock)
-ipcMain.handle('process-supplier-return', async (event, data) => {
-    return processSupplierReturn(data); 
-});
-
-ipcMain.handle('update-product-status-and-stock', async (event, { id, newLevel, newStatus }) => {
-    try {
-        // Updated SQL to set both columns
-        const sql = `UPDATE products SET min_stock_level = ?, status = ? WHERE id = ?`;
-        const stmt = db.prepare(sql);
-        
-        // Ensure parameters are passed in the same order as the '?' in the SQL
-        stmt.run(newLevel, newStatus, id);
-        
-        return { success: true };
-    } catch (err) {
-        console.error("Database Error:", err);
-        return { success: false, error: err.message };
-    }
-});
-
-
-//low stock report ends
-//expiry reports starts
-// Add this inside the IPC HANDLERS section of main.js
-ipcMain.handle('get-near-expiry-report', async () => {
-    try {
-        return getNearExpiryReport();
-    } catch (err) {
-        console.error("IPC Error:", err);
-        return [];
-    }
-});
-//update product
-ipcMain.handle('update-product', async (event, data) => {
-    return updateProduct(data);
-});
-
-//return history
-ipcMain.handle('get-return-history', async (event, saleId) => {
-    try {
-        // REMOVE 'db.' from the line below
-        // You imported the function directly at the top of the file
-        return getReturnHistory(saleId); 
-    } catch (error) {
-        console.error("Database Error:", error);
-        throw error;
-    }
-});
-
-//return item detail
-ipcMain.handle('get-return-history-by-sale', async (event, saleId) => {
-    return getReturnHistoryBySale(saleId);
-});
-
-// main.js around line 378
-ipcMain.handle('get-bill-details', async (event, billId) => {
-    try {
-        const { getBillDetails } = require('./database.js');
-        return getBillDetails(billId); 
-    } catch (error) {
-        console.error("IPC Error:", error);
-        return { success: false, message: error.message };
-    }
-});
-
-
-//change password
-ipcMain.handle('change-password', async (event, currentP, newP) => {
-    return changeUserPassword(currentP, newP);
-});
-//expiry reports ends
-// --- LIFECYCLE ---
-app.whenReady().then(createWindow);
 ipcMain.on('open-db-folder', () => {
-  const userDataPath = app.getPath('userData');
-  shell.openPath(userDataPath); // This opens the folder for the user automatically
+    shell.openPath(app.getPath('userData'));
 });
+
+// --- 5. LIFECYCLE ---
+app.whenReady().then(createWindow);
+
 app.on('window-all-closed', () => { 
     if (process.platform !== 'darwin') app.quit(); 
 });

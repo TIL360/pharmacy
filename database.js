@@ -43,7 +43,16 @@ db.exec(`CREATE TABLE IF NOT EXISTS purchases (
     purchase_date DATETIME DEFAULT CURRENT_TIMESTAMP, 
     FOREIGN KEY(product_id) REFERENCES products(id)
 )`);
-
+db.prepare(`
+    CREATE TABLE IF NOT EXISTS medicines (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        brand_name TEXT,
+        generic_name TEXT,
+        manufacturer TEXT,
+        pack_size TEXT,
+        mrp REAL
+    )
+`).run();
   // Replace inside your initializeDB function
 db.exec(`CREATE TABLE IF NOT EXISTS sales (
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
